@@ -31,8 +31,9 @@ npm run build                  # tsc -b + vite build
 npm run lint                   # eslint apps/web/src
 ```
 
-A husky **pre-commit hook runs `npm run lint && npm test && npm run build`** — commits
-fail if any of the three fail, so expect lint/coverage/typecheck to gate every commit.
+A husky **pre-push hook (`.husky/pre-push`) runs `npm run lint && npm test && npm run build`**
+— the push is rejected if any of the three fail, so lint/coverage/typecheck gate every push
+(commits are not gated).
 
 ### End-to-end tests
 
