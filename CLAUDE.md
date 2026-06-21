@@ -23,7 +23,7 @@ configures both the build and the Vitest runner. Requires Node ≥ 24 (see `pack
 npm test                       # vitest run --coverage (must stay at 100%, see Coverage)
 npm run test:watch             # vitest in watch mode
 npm test -- trips              # run a single file/suite by name filter
-npm test -- -t "archives a trip"  # run tests matching a title
+npm test -- -t "non-archived"  # run tests matching a title
 npm run test:e2e               # Playwright (Chromium) integration + visual specs
 npm run test:e2e:ui            # Playwright interactive UI mode
 npm run dev                    # vite dev server (http://localhost:5173)
