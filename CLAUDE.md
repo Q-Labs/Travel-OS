@@ -3,22 +3,44 @@
 ## Project layout
 
 ```
-apps/web/src/
-  app/         — AppLayout, AppContext, router
-  components/  — PipelineDashboard, InboxDashboard, TripCard, …
-  lib/         — data fixtures, types, utility helpers
+apps/web/
+  src/
+    app/         — AppContext (all global state + useApp), router, routes, Login, main
+    components/  — PipelineDashboard, InboxDashboard, CalendarDashboard, ArchiveDashboard,
+                   TripCard, TweaksPanel, modals/ (AddTripModal, IntegrationsModal), …
+    lib/         — types.ts, data.ts (fixtures), db.ts (Supabase CRUD + Realtime),
+                   trips.ts (pure trip selectors), supabase.ts (client), utils.ts
+  api/inbox/ingest.ts — POST /api/inbox/ingest, Vercel function; Claude Haiku email parsing
 ```
 
-Root-level `vite.config.ts` configures both the build and the Vitest test runner.
+All state lives in `AppContext`; mutations flow `useApp()` action → `lib/db.ts` → Supabase.
+Components read via `useApp()` and never hold trip data locally. Root `vite.config.ts`
+configures both the build and the Vitest runner. Requires Node ≥ 24 (see `package.json`).
 
 ## Commands
 
 ```bash
-npm test          # vitest run --coverage (must stay at 100% branch coverage)
-npm run dev       # vite dev server
-npm run build     # tsc + vite build
-npm run lint      # eslint apps/web/src
+npm test                       # vitest run --coverage (must stay at 100%, see Coverage)
+npm run test:watch             # vitest in watch mode
+npm test -- trips              # run a single file/suite by name filter
+npm test -- -t "archives a trip"  # run tests matching a title
+npm run test:e2e               # Playwright (Chromium) integration + visual specs
+npm run test:e2e:ui            # Playwright interactive UI mode
+npm run dev                    # vite dev server (http://localhost:5173)
+npm run build                  # tsc -b + vite build
+npm run lint                   # eslint apps/web/src
 ```
+
+A husky **pre-commit hook runs `npm run lint && npm test && npm run build`** — commits
+fail if any of the three fail, so expect lint/coverage/typecheck to gate every commit.
+
+### End-to-end tests
+
+Playwright lives in `e2e/` (integration + visual snapshots). Install the browser once with
+`npx playwright install chromium`. The Playwright `webServer` injects `VITE_E2E_BYPASS_AUTH=true`
+so specs reach routes without Supabase creds; it is gated by `import.meta.env.DEV` and
+dead-code-eliminated from production builds. After an intentional UI change, regenerate
+baselines with `npx playwright test --update-snapshots e2e/visual/` and commit the PNGs.
 
 ## TDD — red → green → refactor
 
@@ -32,7 +54,9 @@ Never ship implementation code that isn't covered by a test written in the red p
 
 ## Coverage
 
-The project enforces **100% branch coverage** via Vitest v8. A push that drops any metric below 100% will fail CI. If a branch is genuinely untestable (defensive guard, environment-specific path), annotate it with `/* v8 ignore next */` and add a comment explaining why.
+The project enforces **100% of all four metrics** (statements, branches, functions, lines) via Vitest v8. A push that drops any metric below 100% will fail CI. If a branch is genuinely untestable (defensive guard, environment-specific path), annotate it with `/* v8 ignore next */` and add a comment explaining why.
+
+Coverage is measured only over `app/`, `components/`, `lib/`, and `api/`, but `vite.config.ts` **excludes** several files from the requirement: `lib/types.ts`, `lib/data.ts`, `lib/utils.ts`, `lib/supabase.ts`, and `app/AppContext.tsx`. New behaviour added to those files is not counted — but everything else (including `lib/trips.ts`, `lib/db.ts`, and `api/inbox/ingest.ts`) must be fully covered. Before adding to the exclude list, prefer testing the code.
 
 ## Issues and PRs
 
