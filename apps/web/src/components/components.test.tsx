@@ -714,18 +714,20 @@ describe('modals and tweaks panel', () => {
     expect(screen.getAllByText(/◐ Via forwarding/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/○ Available/).length).toBeGreaterThan(0);
 
-    // Meta + count for active entries
-    expect(screen.getByText(/quincy\+trips@travelos\.app/)).toBeInTheDocument();
-    expect(screen.getByText(/42 this year/)).toBeInTheDocument();
+    // Meta points at the real endpoint, not a fictional mailbox
+    expect(screen.getByText(/POST \/api\/inbox\/ingest/)).toBeInTheDocument();
   });
 
-  it('IntegrationsModal renders meta without count when count is null', () => {
-    INTEGRATIONS.find((i) => i.key === 'forward')!.count = null;
+  it('IntegrationsModal advertises no connection the code cannot make', () => {
     renderWithApp(<IntegrationsDriver />);
     fireEvent.click(screen.getByRole('button', { name: /Open integrations/i }));
 
-    expect(screen.getByText(/quincy\+trips@travelos\.app/)).toBeInTheDocument();
-    expect(screen.queryByText(/42 this year/)).not.toBeInTheDocument();
+    // Only the forwarding endpoint and the iCal feed are actually implemented.
+    const connected = INTEGRATIONS.filter((i) => i.status === 'active').map((i) => i.key);
+    expect(connected).toEqual(['forward', 'calendar']);
+
+    // Nothing claims fabricated usage telemetry.
+    expect(screen.queryByText(/this year|this month|PNRs watched|saved drafts/)).toBeNull();
   });
 
   it('IntegrationsModal closes via close button, backdrop, and done button', () => {

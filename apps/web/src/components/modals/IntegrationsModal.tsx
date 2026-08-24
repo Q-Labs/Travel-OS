@@ -48,7 +48,7 @@ export function IntegrationsModal() {
                     <div style={{ fontSize: 12.5, color: 'var(--ink-3)', marginTop: 2, lineHeight: 1.5 }}>{it.desc}</div>
                     {it.meta && (
                       <div style={{ fontSize: 11.5, color: 'var(--ink-2)', marginTop: 4, fontFamily: 'var(--font-mono)' }}>
-                        {it.meta}{it.count ? ' · ' + it.count : ''}
+                        {it.meta}
                       </div>
                     )}
                   </div>

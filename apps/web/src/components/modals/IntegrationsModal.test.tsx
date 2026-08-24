@@ -67,7 +67,7 @@ describe('IntegrationsModal calendar feed', () => {
 
   it('offers nothing to copy when the user has no token yet', () => {
     render(<IntegrationsModal />);
-    expect(calendarButton()).toHaveTextContent('Connect');
+    expect(calendarButton()).toHaveTextContent('Manage');
     fireEvent.click(calendarButton());
     expect(screen.queryByRole('button', { name: 'Copy' })).not.toBeInTheDocument();
   });

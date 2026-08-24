@@ -138,5 +138,4 @@ export type Integration = {
   desc: string;
   status: IntegrationStatus;
   meta: string | null;
-  count: string | null;
 };
