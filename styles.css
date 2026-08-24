@@ -1494,3 +1494,48 @@ input, textarea, select {
   border-radius: 6px;
   padding: 6px 8px;
 }
+
+/* Wikipedia destination summary on the trip overview */
+.destination-blurb {
+  margin-bottom: 14px;
+  padding: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.destination-blurb p {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+.destination-blurb-img {
+  float: right;
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin: 0 0 8px 12px;
+}
+.destination-blurb a {
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+/* Home-currency equivalent under a foreign-currency budget */
+.budget-converted {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ink-3);
+  text-align: center;
+}
+.budget-converted span {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.atm-hint {
+  font-style: italic;
+  color: var(--ink-3);
+  font-weight: 400;
+}

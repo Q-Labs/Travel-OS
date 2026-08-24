@@ -12,7 +12,7 @@ const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
  * `fetch` is injected rather than defaulted so tests can stub it without a
  * network call and without an untestable default-parameter branch.
  */
-export type FetchFn = (input: string) => Promise<Response>;
+export type FetchFn = (input: string, init?: RequestInit) => Promise<Response>;
 
 export type GeocodeResult = {
   lat: number;

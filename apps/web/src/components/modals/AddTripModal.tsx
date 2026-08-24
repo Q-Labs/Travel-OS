@@ -3,6 +3,7 @@ import { useApp } from '../../app/AppContext';
 import { TRAVELERS } from '../../lib/data';
 import type { Trip, TripCategory } from '../../lib/types';
 import { CATEGORIES } from '../../lib/utils';
+import { geocode } from '../../lib/clients/openMeteo';
 import { Icon } from '../Icon';
 
 type FormData = {
@@ -35,7 +36,27 @@ export function AddTripModal() {
     budget_total: '',
   });
 
+  const [lookingUp, setLookingUp] = useState(false);
+
   const close = () => setShowModal(false);
+
+  /**
+   * Fills in region and country from the destination via Open-Meteo's geocoder.
+   * Anything the user already typed wins — this only fills blanks.
+   */
+  const autofillFromDestination = async () => {
+    const name = data.destination.trim();
+    if (!name) return;
+    setLookingUp(true);
+    const place = await geocode(name, (url, init) => fetch(url, init));
+    setLookingUp(false);
+    if (!place) return;
+    setData((d) => ({
+      ...d,
+      region: d.region || place.region,
+      country: d.country || place.country,
+    }));
+  };
 
   const toggleCat = (k: TripCategory) =>
     setData((d) => ({
@@ -108,12 +129,15 @@ export function AddTripModal() {
                   autoFocus
                   value={data.destination}
                   onChange={(e) => setData((d) => ({ ...d, destination: e.target.value }))}
+                  onBlur={() => void autofillFromDestination()}
                   placeholder="Kyoto, Patagonia, Lisbon…"
                 />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div className="field">
-                  <label htmlFor="atm-region">Region / venue</label>
+                  <label htmlFor="atm-region">
+                    Region / venue{lookingUp && <em className="atm-hint"> · looking up…</em>}
+                  </label>
                   <input
                     id="atm-region"
                     value={data.region}

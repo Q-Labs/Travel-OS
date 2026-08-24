@@ -34,6 +34,11 @@ import { StageDot } from './StageDot';
 import { TripCard } from './TripCard';
 import { TweaksPanel } from './TweaksPanel';
 
+// AddTripModal geocodes on destination blur; keep these tests off the network.
+vi.mock('../lib/clients/openMeteo', () => ({
+  geocode: vi.fn().mockResolvedValue(null),
+}));
+
 const navigateMock = vi.fn();
 
 vi.mock('react-router-dom', async () => {

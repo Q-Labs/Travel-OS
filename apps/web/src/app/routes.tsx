@@ -9,6 +9,8 @@ import { PipelineDashboard } from '../components/PipelineDashboard';
 import { AddTripModal } from '../components/modals/AddTripModal';
 import { IntegrationsModal } from '../components/modals/IntegrationsModal';
 import { TweaksPanel } from '../components/TweaksPanel';
+import { BudgetConversion } from '../components/BudgetConversion';
+import { DestinationBlurb } from '../components/DestinationBlurb';
 import { useApp } from './AppContext';
 import { TODAY, TRAVELERS } from '../lib/data';
 import { findTripById } from '../lib/trips';
@@ -367,6 +369,7 @@ function TripDetailContent({
                 <h3>Overview</h3>
                 <p>Trip notes and overall progress.</p>
               </div>
+              <DestinationBlurb destination={trip.destination} />
               <label className="field-label" htmlFor="trip-overview-notes">Trip notes</label>
               <textarea
                 id="trip-overview-notes"
@@ -478,6 +481,7 @@ function TripDetailContent({
                   <strong>{fmtMoney(trip.budget_spent)}</strong>
                   <span>of {fmtMoney(trip.budget_total)}</span>
                 </div>
+                <BudgetConversion trip={trip} />
               </div>
               <div className="trip-card">
                 <div className="section-heading">

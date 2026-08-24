@@ -9,7 +9,8 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 - **Inbox** — forward a booking confirmation to your personal address and it is parsed, matched to a trip, and filed automatically
 - **Insights** — live weather, packing, passport-expiry and stale-trip nudges, regenerated daily
 - **Calendar** — month view showing all trip date ranges at a glance, plus a subscribable iCal feed for Google/Apple Calendar
-- **Add Trip wizard** — 3-step modal: destination, categories/travelers, dates/budget
+- **Add Trip wizard** — 3-step modal: destination, categories/travelers, dates/budget, with region and country auto-filled from the destination
+- **Trip context** — a Wikipedia summary on each trip's Overview, and a home-currency equivalent for budgets held in another currency
 - **Theming** — light/dark mode, 5 accent colors (Clay, Olive, Ink, Plum, Sand), 3 density levels
 
 ## Tech stack
@@ -22,6 +23,8 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 | Backend | Supabase (Postgres + magic-link auth + Realtime) |
 | AI | Anthropic Claude Haiku (email parsing via `@anthropic-ai/sdk`) |
 | Weather / geocoding | [Open-Meteo](https://open-meteo.com) — no API key, no account |
+| Exchange rates | [Frankfurter](https://frankfurter.dev) (ECB reference rates) — no API key |
+| Destination context | [Wikipedia REST API](https://en.wikipedia.org/api/rest_v1/) — no API key |
 | Unit tests | Vitest + Testing Library (100% branch coverage enforced) |
 | E2E / visual tests | Playwright (Chromium, with screenshot regression) |
 | Styling | Vanilla CSS with design-token variables |
@@ -57,11 +60,19 @@ Claude Haiku parses forwarded booking emails into structured data.
 2. Go to **API Keys** and create a new key.
 3. Copy the key → `ANTHROPIC_API_KEY`.
 
-### 3. Open-Meteo
+### 3. Open-Meteo, Frankfurter and Wikipedia
 
-Nothing to set up. [Open-Meteo](https://open-meteo.com) powers the weather insights and
-destination geocoding, and needs no API key, account, or billing details — the free
-non-commercial tier is well above what the daily insights cron uses.
+Nothing to set up. All three are keyless:
+
+- [Open-Meteo](https://open-meteo.com) powers weather insights and destination geocoding.
+  The free non-commercial tier is well above what the daily insights cron uses.
+- [Frankfurter](https://frankfurter.dev) supplies the ECB's daily reference rates for
+  converting non-USD budgets.
+- The [Wikipedia REST API](https://en.wikipedia.org/api/rest_v1/) supplies destination
+  summaries. Its content is **CC BY-SA**, which is why every blurb renders an attribution
+  link back to the source article — that link is a licence condition, not decoration.
+
+None require an account, API key, or billing details.
 
 ### 4. Vercel (deployment)
 
@@ -243,7 +254,9 @@ apps/web/
     lib/         — types.ts, db.ts (Supabase CRUD + Realtime), data.ts (fixtures), utils.ts,
                    rows.ts (row → domain mappers), insights.ts (pure insight rules),
                    inboundEmail.ts (provider webhook adapters), ical.ts (RFC 5545 writer),
-                   clients/openMeteo.ts (weather + geocoding)
+                   currency.ts (conversion + formatting),
+                   clients/ — openMeteo.ts (weather + geocoding), frankfurter.ts (FX),
+                              wikipedia.ts (destination summaries)
   api/
     inbox/
       ingest.ts  — POST /api/inbox/ingest (Claude-powered email parsing)
@@ -277,6 +290,14 @@ a read-only feed needs is narrow. It handles the parts calendar clients are stri
 CRLF endings, 75-octet line folding that never splits a multi-byte character, exclusive
 `DTEND` for all-day events, and escaping of `\`, `;`, `,` and newlines. UIDs are derived from
 trip and booking ids, so re-subscribing updates events rather than duplicating them.
+
+### Enrichment
+
+`BudgetConversion` and `DestinationBlurb` each call a keyless API directly from the browser
+(all three support CORS) and degrade silently: if the API is unreachable, the budget still
+renders in its native currency and the Overview simply has no blurb. The Add Trip wizard
+geocodes the destination on blur to fill region and country, never overwriting what the user
+already typed.
 
 `price_drop` insights remain fixtures — every flight-price API (Duffel, Amadeus)
 requires a registered key, which this integration deliberately avoids.
