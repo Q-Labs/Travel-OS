@@ -80,6 +80,20 @@ export async function fetchInboxItems(userId: string): Promise<InboxItem[]> {
   return data.map(rowToInboxItem);
 }
 
+/**
+ * The user's routing token — it addresses both the forwarding inbox and the
+ * read-only calendar feed, so the UI needs it to show either one.
+ */
+export async function fetchInboxToken(userId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('user_inbox_tokens')
+    .select('token')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return (data as { token: string }).token;
+}
+
 export async function fetchTravelers(userId: string): Promise<Traveler[]> {
   const { data, error } = await supabase
     .from('travelers')

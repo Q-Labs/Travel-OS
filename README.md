@@ -8,7 +8,7 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 - **Trip detail tabs** — Overview, Itinerary, Bookings, Budget, Packing, Documents, Notes per trip
 - **Inbox** — forward a booking confirmation to your personal address and it is parsed, matched to a trip, and filed automatically
 - **Insights** — live weather, packing, passport-expiry and stale-trip nudges, regenerated daily
-- **Calendar** — month view showing all trip date ranges at a glance
+- **Calendar** — month view showing all trip date ranges at a glance, plus a subscribable iCal feed for Google/Apple Calendar
 - **Add Trip wizard** — 3-step modal: destination, categories/travelers, dates/budget
 - **Theming** — light/dark mode, 5 accent colors (Clay, Olive, Ink, Plum, Sand), 3 density levels
 
@@ -86,6 +86,17 @@ curl -X POST https://<your-vercel-domain>/api/inbox/ingest \
     }
   }'
 ```
+
+### Subscribing to the calendar feed
+
+Open **Integrations → Calendar export → Manage** to reveal your personal feed URL, then add
+it in Google Calendar (*Other calendars → From URL*) or Apple Calendar (*File → New Calendar
+Subscription*). The feed is read-only and contains an all-day event per trip plus one per
+dated booking.
+
+The URL embeds your routing token and is the only credential, so treat it like a password —
+anyone holding the link can read your trips. Responses are marked `private` so shared
+proxies never cache them.
 
 ### Pointing an email provider at the inbox
 
@@ -231,13 +242,15 @@ apps/web/
                    ArchiveDashboard, TripCard, modals/, …
     lib/         — types.ts, db.ts (Supabase CRUD + Realtime), data.ts (fixtures), utils.ts,
                    rows.ts (row → domain mappers), insights.ts (pure insight rules),
-                   inboundEmail.ts (provider webhook adapters),
+                   inboundEmail.ts (provider webhook adapters), ical.ts (RFC 5545 writer),
                    clients/openMeteo.ts (weather + geocoding)
   api/
     inbox/
       ingest.ts  — POST /api/inbox/ingest (Claude-powered email parsing)
     insights/
       refresh.ts — GET/POST /api/insights/refresh (daily cron; regenerates insights)
+    calendar/
+      feed.ts    — GET /api/calendar/<token> (read-only iCal feed)
 supabase/
   migrations/    — schema, RLS policies, Realtime publication
 ```
@@ -256,6 +269,14 @@ user's trips, geocodes and forecasts only the trips departing within Open-Meteo'
 ~14-day horizon, then upserts the generated insights. Insight ids are deterministic
 (`wx-<tripId>`, `pack-<tripId>`, …), so re-running the cron updates rows in place
 instead of piling up duplicates.
+
+### Calendar feed
+
+`lib/ical.ts` is a small hand-rolled RFC 5545 writer — no dependency, since the spec surface
+a read-only feed needs is narrow. It handles the parts calendar clients are strict about:
+CRLF endings, 75-octet line folding that never splits a multi-byte character, exclusive
+`DTEND` for all-day events, and escaping of `\`, `;`, `,` and newlines. UIDs are derived from
+trip and booking ids, so re-subscribing updates events rather than duplicating them.
 
 `price_drop` insights remain fixtures — every flight-price API (Duffel, Amadeus)
 requires a registered key, which this integration deliberately avoids.

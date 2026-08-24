@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/calendar/:token",
+      "destination": "/api/calendar/feed?token=:token"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

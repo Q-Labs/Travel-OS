@@ -27,6 +27,7 @@ import {
   fetchInsights,
   fetchInboxItems,
   fetchTravelers,
+  fetchInboxToken,
   upsertTrip,
   upsertTripDetail,
   deleteInsight,
@@ -39,6 +40,7 @@ import {
 function makeChain(result: { data: unknown; error: unknown; count?: number }) {
   const c = {
     select: vi.fn(),
+    maybeSingle: vi.fn(),
     eq: vi.fn(),
     order: vi.fn(),
     upsert: vi.fn(),
@@ -48,6 +50,7 @@ function makeChain(result: { data: unknown; error: unknown; count?: number }) {
       Promise.resolve(cb(result)),
   };
   c.select.mockReturnValue(c);
+  c.maybeSingle.mockResolvedValue(result);
   c.eq.mockReturnValue(c);
   c.order.mockReturnValue(c);
   c.upsert.mockReturnValue(c);
@@ -509,5 +512,23 @@ describe('seedFromFixtures', () => {
       expect.arrayContaining([expect.objectContaining({ splits })]),
       expect.any(Object),
     );
+  });
+});
+
+describe('fetchInboxToken', () => {
+  it('returns the token for a user', async () => {
+    mockFrom.mockReturnValue(makeChain({ data: { token: 'a1b2c3' }, error: null }));
+    expect(await fetchInboxToken('u1')).toBe('a1b2c3');
+    expect(mockFrom).toHaveBeenCalledWith('user_inbox_tokens');
+  });
+
+  it('returns null when the user has no token yet', async () => {
+    mockFrom.mockReturnValue(makeChain({ data: null, error: null }));
+    expect(await fetchInboxToken('u1')).toBeNull();
+  });
+
+  it('returns null when the query errors', async () => {
+    mockFrom.mockReturnValue(makeChain({ data: null, error: { message: 'boom' } }));
+    expect(await fetchInboxToken('u1')).toBeNull();
   });
 });

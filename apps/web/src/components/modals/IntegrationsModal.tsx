@@ -1,11 +1,24 @@
+import { useState } from 'react';
 import { useApp } from '../../app/AppContext';
 import { INTEGRATIONS } from '../../lib/data';
 import { Icon } from '../Icon';
 
 export function IntegrationsModal() {
-  const { setShowIntegrations } = useApp();
+  const { setShowIntegrations, inboxToken } = useApp();
+  const [showFeed, setShowFeed] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const close = () => setShowIntegrations(false);
+
+  // The token addresses the read-only feed, so the URL itself is the credential.
+  const feedUrl = inboxToken
+    ? `${window.location.origin}/api/calendar/${inboxToken}`
+    : null;
+
+  const copyFeed = async (url: string) => {
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+  };
 
   return (
     <div className="modal-backdrop" onClick={close}>
@@ -17,29 +30,52 @@ export function IntegrationsModal() {
           </div>
         </div>
         <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-          {INTEGRATIONS.map((it) => (
-            <div key={it.key} className="integ-row">
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <strong style={{ fontSize: 14 }}>{it.name}</strong>
-                  <span className={`integ-status ${it.status}`}>
-                    {it.status === 'active' && '● Connected'}
-                    {it.status === 'email-only' && '◐ Via forwarding'}
-                    {it.status === 'available' && '○ Available'}
-                  </span>
+          {INTEGRATIONS.map((it) => {
+            const isCalendar = it.key === 'calendar';
+            const status = isCalendar && feedUrl ? 'active' : it.status;
+            return (
+              <div key={it.key}>
+                <div className="integ-row">
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <strong style={{ fontSize: 14 }}>{it.name}</strong>
+                      <span className={`integ-status ${status}`}>
+                        {status === 'active' && '● Connected'}
+                        {status === 'email-only' && '◐ Via forwarding'}
+                        {status === 'available' && '○ Available'}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-3)', marginTop: 2, lineHeight: 1.5 }}>{it.desc}</div>
+                    {it.meta && (
+                      <div style={{ fontSize: 11.5, color: 'var(--ink-2)', marginTop: 4, fontFamily: 'var(--font-mono)' }}>
+                        {it.meta}{it.count ? ' · ' + it.count : ''}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    className="btn"
+                    style={{ padding: '6px 12px' }}
+                    onClick={isCalendar ? () => setShowFeed((v) => !v) : undefined}
+                  >
+                    {status === 'active' ? 'Manage' : 'Connect'}
+                  </button>
                 </div>
-                <div style={{ fontSize: 12.5, color: 'var(--ink-3)', marginTop: 2, lineHeight: 1.5 }}>{it.desc}</div>
-                {it.meta && (
-                  <div style={{ fontSize: 11.5, color: 'var(--ink-2)', marginTop: 4, fontFamily: 'var(--font-mono)' }}>
-                    {it.meta}{it.count ? ' · ' + it.count : ''}
+                {isCalendar && showFeed && feedUrl && (
+                  <div className="integ-feed">
+                    <div className="integ-feed-label">
+                      Subscribe in Google or Apple Calendar. Anyone with this link can read your trips.
+                    </div>
+                    <div className="integ-feed-row">
+                      <code>{feedUrl}</code>
+                      <button className="btn" onClick={() => void copyFeed(feedUrl)}>
+                        {copied ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
-              <button className="btn" style={{ padding: '6px 12px' }}>
-                {it.status === 'active' ? 'Manage' : 'Connect'}
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="modal-foot">
           <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>Everything here is read-only or email-based. Your inbox stays yours.</span>
