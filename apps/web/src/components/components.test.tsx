@@ -619,6 +619,50 @@ describe('modals and tweaks panel', () => {
     expect(screen.queryByLabelText(/Rough budget/i)).not.toBeInTheDocument();
   });
 
+  it('TripCard shows a budget in the trip\u2019s own currency, not dollars', () => {
+    const jpyTrip = {
+      ...TRIPS.find((trip) => trip.id === 'tr-lisbon')!,
+      id: 'tr-jpy',
+      destination: 'Sapporo',
+      stage: 'booked' as const,
+      budget_currency: 'JPY',
+      budget_total: 900000,
+      budget_spent: 100000,
+    };
+    render(<TripCard trip={jpyTrip} />);
+    const progress = document.querySelector('.tcard-progress') as HTMLElement;
+    expect(progress.title).toContain('\u00a5');
+    expect(progress.title).not.toContain('$');
+  });
+
+  it('AddTripModal lets the budget be set in a non-USD currency', () => {
+    function CurrencyDriver() {
+      const { trips, showModal, setShowModal } = useApp();
+      const newest = trips.find((t) => t.destination === 'Sapporo');
+      return (
+        <>
+          <div data-testid="cur">{newest ? newest.budget_currency : 'none'}</div>
+          <button onClick={() => setShowModal(true)}>Open modal</button>
+          {showModal && <AddTripModal />}
+        </>
+      );
+    }
+    renderWithApp(<CurrencyDriver />);
+    fireEvent.click(screen.getByRole('button', { name: /Open modal/i }));
+
+    fireEvent.change(screen.getByPlaceholderText(/Kyoto, Patagonia/i), { target: { value: 'Sapporo' } });
+    fireEvent.change(screen.getByPlaceholderText(/Japan/i), { target: { value: 'Japan' } });
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^Family$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
+
+    fireEvent.change(screen.getByLabelText(/Rough budget/i), { target: { value: '900000' } });
+    fireEvent.change(screen.getByLabelText(/Currency/i), { target: { value: 'JPY' } });
+    fireEvent.click(screen.getByRole('button', { name: /Add trip/i }));
+
+    expect(screen.getByTestId('cur')).toHaveTextContent('JPY');
+  });
+
   it('AddTripModal handles empty budget (fallback to 0) and trip count increases', () => {
     function CountingDriver() {
       const { trips, showModal, setShowModal } = useApp();
@@ -709,8 +753,8 @@ describe('modals and tweaks panel', () => {
     expect(screen.getByText('OpenTable')).toBeInTheDocument();
     expect(screen.getByText('Calendar export')).toBeInTheDocument();
 
-    // Status badges
-    expect(screen.getAllByText(/● Connected/).length).toBeGreaterThan(0);
+    // Status badges. Without a token nothing reports as connected.
+    expect(screen.queryByText(/● Connected/)).toBeNull();
     expect(screen.getAllByText(/◐ Via forwarding/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/○ Available/).length).toBeGreaterThan(0);
 
@@ -722,9 +766,10 @@ describe('modals and tweaks panel', () => {
     renderWithApp(<IntegrationsDriver />);
     fireEvent.click(screen.getByRole('button', { name: /Open integrations/i }));
 
-    // Only the forwarding endpoint and the iCal feed are actually implemented.
-    const connected = INTEGRATIONS.filter((i) => i.status === 'active').map((i) => i.key);
-    expect(connected).toEqual(['forward', 'calendar']);
+    // Nothing is connected out of the box: the feed and the forwarding address
+    // are both derived from a per-user token this driver has not got.
+    expect(INTEGRATIONS.filter((i) => i.status === 'active')).toEqual([]);
+    expect(screen.queryByText(/● Connected/)).toBeNull();
 
     // Nothing claims fabricated usage telemetry.
     expect(screen.queryByText(/this year|this month|PNRs watched|saved drafts/)).toBeNull();

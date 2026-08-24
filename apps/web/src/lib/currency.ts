@@ -5,6 +5,9 @@
  * one base, so cross-rates are derived by routing through that base.
  */
 
+/** The currency budgets are converted into for display. */
+export const HOME_CURRENCY = 'USD';
+
 export type RateTable = {
   base: string;
   rates: Record<string, number>;

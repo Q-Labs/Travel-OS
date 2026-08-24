@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchRates } from '../lib/clients/frankfurter';
-import { convertAmount, fmtMoneyIn } from '../lib/currency';
+import { HOME_CURRENCY, convertAmount, fmtMoneyIn } from '../lib/currency';
 import type { Trip } from '../lib/types';
-
-/** The currency the dashboard totals are shown in. */
-export const HOME_CURRENCY = 'USD';
 
 /**
  * Shows a home-currency equivalent beside a budget held in another currency.

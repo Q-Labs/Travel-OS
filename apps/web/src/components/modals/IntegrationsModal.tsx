@@ -32,7 +32,14 @@ export function IntegrationsModal() {
         <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
           {INTEGRATIONS.map((it) => {
             const isCalendar = it.key === 'calendar';
-            const status = isCalendar && feedUrl ? 'active' : it.status;
+            // Both the feed and the forwarding address are derived from the
+            // user's token, so neither is connected until that token exists.
+            const tokenGated = isCalendar || it.key === 'forward';
+            const status = tokenGated && inboxToken ? 'active' : it.status;
+            // The calendar feed is the only implemented action, and only once a
+            // token exists. Every other row's button would be inert, so it is
+            // disabled rather than left looking clickable.
+            const canAct = isCalendar && Boolean(feedUrl);
             return (
               <div key={it.key}>
                 <div className="integ-row">
@@ -55,7 +62,8 @@ export function IntegrationsModal() {
                   <button
                     className="btn"
                     style={{ padding: '6px 12px' }}
-                    onClick={isCalendar ? () => setShowFeed((v) => !v) : undefined}
+                    disabled={!canAct}
+                    onClick={canAct ? () => setShowFeed((v) => !v) : undefined}
                   >
                     {status === 'active' ? 'Manage' : 'Connect'}
                   </button>

@@ -65,11 +65,30 @@ describe('IntegrationsModal calendar feed', () => {
     expect(screen.queryByText(url)).not.toBeInTheDocument();
   });
 
-  it('offers nothing to copy when the user has no token yet', () => {
+  it('does not claim a connection before the user has a token', () => {
     render(<IntegrationsModal />);
-    expect(calendarButton()).toHaveTextContent('Manage');
+    const row = screen.getByText('Calendar export').closest('.integ-row') as HTMLElement;
+
+    // Without a token there is no feed to hand out, so the row must not say Connected.
+    expect(row).toHaveTextContent('Available');
+    expect(row).not.toHaveTextContent('Connected');
+    expect(calendarButton()).toHaveTextContent('Connect');
+
     fireEvent.click(calendarButton());
     expect(screen.queryByRole('button', { name: 'Copy' })).not.toBeInTheDocument();
+  });
+
+  it('does not render actionable buttons for rows that cannot be actioned', () => {
+    state.inboxToken = 'a1b2c3';
+    render(<IntegrationsModal />);
+    const rows = Array.from(document.querySelectorAll('.integ-row')) as HTMLElement[];
+
+    for (const row of rows) {
+      const name = (row.querySelector('strong') as HTMLElement).textContent;
+      const btn = row.querySelector('button') as HTMLButtonElement;
+      // Calendar is the only row with an implemented action.
+      expect(btn.disabled).toBe(name !== 'Calendar export');
+    }
   });
 
   it('closes from the Done button', () => {

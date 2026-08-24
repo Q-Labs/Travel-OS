@@ -388,8 +388,8 @@ export const INBOX: InboxItem[] = [
 ];
 
 export const INTEGRATIONS: Integration[] = [
-  { key: 'forward', name: 'Forwarding inbox', desc: 'Forward any confirmation to a dedicated address. Point Postmark, SendGrid or Cloudflare Email Routing at /api/inbox/ingest.', status: 'active', meta: 'POST /api/inbox/ingest' },
-  { key: 'calendar', name: 'Calendar export', desc: 'Subscribe to your trips and confirmed bookings as an iCal feed.', status: 'active', meta: 'webcal feed' },
+  { key: 'forward', name: 'Forwarding inbox', desc: 'Forward any confirmation to a dedicated address. Point Postmark, SendGrid or Cloudflare Email Routing at /api/inbox/ingest.', status: 'available', meta: 'POST /api/inbox/ingest' },
+  { key: 'calendar', name: 'Calendar export', desc: 'Subscribe to your trips and confirmed bookings as an iCal feed.', status: 'available', meta: '/api/calendar/<token>' },
   { key: 'gmail', name: 'Gmail', desc: 'Read-only scan of confirmation senders. Needs an OAuth flow — not built yet.', status: 'available', meta: null },
   { key: 'airlines', name: 'Flight tracking', desc: 'Price-drop alerts and itinerary sync. Duffel is self-serve and pay-as-you-go — not wired up yet.', status: 'available', meta: null },
   { key: 'extension', name: 'Browser extension', desc: 'Save listings from Airbnb, Vrbo, Booking.com while researching. Not built yet.', status: 'available', meta: null },

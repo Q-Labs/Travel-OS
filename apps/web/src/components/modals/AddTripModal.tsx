@@ -4,6 +4,7 @@ import { TRAVELERS } from '../../lib/data';
 import type { Trip, TripCategory } from '../../lib/types';
 import { CATEGORIES } from '../../lib/utils';
 import { geocode } from '../../lib/clients/openMeteo';
+import { HOME_CURRENCY } from '../../lib/currency';
 import { Icon } from '../Icon';
 
 type FormData = {
@@ -16,9 +17,12 @@ type FormData = {
   categories: TripCategory[];
   travelers: string[];
   budget_total: string;
+  budget_currency: string;
 };
 
 const STEP_LABELS = ['the idea', 'who and what', 'first details'];
+/** A short list of common travel currencies; all are quoted by the ECB via Frankfurter. */
+const CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'MXN', 'SEK', 'NOK'];
 const COVER_HUES = [20, 180, 350, 260, 60, 110, 300];
 
 export function AddTripModal() {
@@ -34,6 +38,7 @@ export function AddTripModal() {
     categories: [],
     travelers: ['t1'],
     budget_total: '',
+    budget_currency: HOME_CURRENCY,
   });
 
   const [lookingUp, setLookingUp] = useState(false);
@@ -94,7 +99,7 @@ export function AddTripModal() {
       date_approx: data.date_approx || null,
       budget_total: Number(data.budget_total) || 0,
       budget_spent: 0,
-      budget_currency: 'USD',
+      budget_currency: data.budget_currency,
       travelers: data.travelers,
       cover: { hue, label: 'new·' + data.country.toLowerCase().slice(0, 4) },
       notes: '',
@@ -203,15 +208,29 @@ export function AddTripModal() {
 
           {step === 2 && (
             <>
-              <div className="field">
-                <label htmlFor="atm-budget">Rough budget</label>
-                <input
-                  id="atm-budget"
-                  type="number"
-                  value={data.budget_total}
-                  onChange={(e) => setData((d) => ({ ...d, budget_total: e.target.value }))}
-                  placeholder="8000"
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14 }}>
+                <div className="field">
+                  <label htmlFor="atm-budget">Rough budget</label>
+                  <input
+                    id="atm-budget"
+                    type="number"
+                    value={data.budget_total}
+                    onChange={(e) => setData((d) => ({ ...d, budget_total: e.target.value }))}
+                    placeholder="8000"
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="atm-currency">Currency</label>
+                  <select
+                    id="atm-currency"
+                    value={data.budget_currency}
+                    onChange={(e) => setData((d) => ({ ...d, budget_currency: e.target.value }))}
+                  >
+                    {CURRENCIES.map((code) => (
+                      <option key={code} value={code}>{code}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div style={{ background: 'var(--bg-sunken)', padding: 16, borderRadius: 10, fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.6 }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, marginBottom: 4 }}>

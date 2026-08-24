@@ -10,6 +10,7 @@ import { AddTripModal } from '../components/modals/AddTripModal';
 import { IntegrationsModal } from '../components/modals/IntegrationsModal';
 import { TweaksPanel } from '../components/TweaksPanel';
 import { BudgetConversion } from '../components/BudgetConversion';
+import { fmtMoneyIn } from '../lib/currency';
 import { DestinationBlurb } from '../components/DestinationBlurb';
 import { useApp } from './AppContext';
 import { TODAY, TRAVELERS } from '../lib/data';
@@ -21,7 +22,6 @@ import {
   daysBetween,
   fmtDate,
   fmtDateRange,
-  fmtMoney,
 } from '../lib/utils';
 import type { Booking, BookingSource, BookingStatus, PackingCategory, Trip, TripDetail, TripDocument, TripSplit } from '../lib/types';
 
@@ -335,7 +335,7 @@ function TripDetailContent({
             <TripStat label="Travelers" value={String(travelers.length)} subvalue={travelers.map((traveler) => traveler.name).join(', ')} />
             <TripStat
               label="Budget"
-              value={`${fmtMoney(trip.budget_spent)} / ${fmtMoney(trip.budget_total)}`}
+              value={`${fmtMoneyIn(trip.budget_spent, trip.budget_currency)} / ${fmtMoneyIn(trip.budget_total, trip.budget_currency)}`}
               progress={budgetPct}
             />
             <TripStat label="Bookings" value={`${bookingPct}% complete`} subvalue={`${bookingDone} of ${detail.bookings.length} done`} />
@@ -444,7 +444,7 @@ function TripDetailContent({
                                 {activity.duration ? ` • ${Math.round(activity.duration / 60)}h` : ''}
                               </div>
                             </div>
-                            <div className="activity-cost">{activity.cost != null ? fmtMoney(activity.cost) : '—'}</div>
+                            <div className="activity-cost">{activity.cost != null ? fmtMoneyIn(activity.cost, trip.budget_currency) : '—'}</div>
                           </div>
                         ))}
                       </div>
@@ -461,7 +461,7 @@ function TripDetailContent({
           </section>
         )}
 
-        {tab === 'bookings' && <BookingsPanel detail={detail} tripId={trip.id} onToggleStatus={toggleBookingStatus} />}
+        {tab === 'bookings' && <BookingsPanel detail={detail} tripId={trip.id} currency={trip.budget_currency} onToggleStatus={toggleBookingStatus} />}
 
         {tab === 'budget' && (
           <>
@@ -478,8 +478,8 @@ function TripDetailContent({
                   </div>
                 </div>
                 <div className="budget-summary">
-                  <strong>{fmtMoney(trip.budget_spent)}</strong>
-                  <span>of {fmtMoney(trip.budget_total)}</span>
+                  <strong>{fmtMoneyIn(trip.budget_spent, trip.budget_currency)}</strong>
+                  <span>of {fmtMoneyIn(trip.budget_total, trip.budget_currency)}</span>
                 </div>
                 <BudgetConversion trip={trip} />
               </div>
@@ -495,7 +495,7 @@ function TripDetailContent({
                       <div key={row.category} className="budget-line">
                         <div className="budget-line-head">
                           <span>{row.category}</span>
-                          <strong>{fmtMoney(row.spent)} / {fmtMoney(row.total)}</strong>
+                          <strong>{fmtMoneyIn(row.spent, trip.budget_currency)} / {fmtMoneyIn(row.total, trip.budget_currency)}</strong>
                         </div>
                         <div className="mini-progress">
                           <div style={{ width: `${rowPct}%` }} />
@@ -620,10 +620,12 @@ function ProgressRow({ label, value, progress }: { label: string; value: string;
 function BookingsPanel({
   detail,
   tripId,
+  currency,
   onToggleStatus,
 }: {
   detail: TripDetail;
   tripId: string;
+  currency: string;
   onToggleStatus: (tripId: string, idx: number, status: string) => void;
 }) {
   const [categoryFilter, setCategoryFilter] = useState<'all' | Booking['category']>('all');
@@ -702,7 +704,7 @@ function BookingsPanel({
                 <span className="source-chip">{SOURCE_LABELS[booking.source ?? 'unknown']}</span>
               </div>
               <code className="booking-code">{booking.confirmation ?? '—'}</code>
-              <div className="booking-cost">{booking.cost != null ? fmtMoney(booking.cost) : '—'}</div>
+              <div className="booking-cost">{booking.cost != null ? fmtMoneyIn(booking.cost, currency) : '—'}</div>
             </div>
           );
         })}
@@ -770,7 +772,7 @@ function SplitBudget({ splits, trip }: { splits: TripSplit[] | undefined; trip: 
       <div className="split-empty">
         <p className="split-empty-title">{trip.travelers.length} travelers · <em>no split set up yet</em></p>
         <p className="split-empty-hint">
-          Default: equal split — {fmtMoney(trip.budget_total / trip.travelers.length)} per person
+          Default: equal split — {fmtMoneyIn(trip.budget_total / trip.travelers.length, trip.budget_currency)} per person
         </p>
         <button className="btn primary">
           <Icon.Plus /> Set up split
@@ -809,7 +811,7 @@ function SplitBudget({ splits, trip }: { splits: TripSplit[] | undefined; trip: 
               <div className="split-avatar">{displayInitials}</div>
               <div className="split-info">
                 <div className="split-name">{displayName}</div>
-                <div className="split-amounts">Paid {fmtMoney(s.paid)} · share {fmtMoney(s.share)}</div>
+                <div className="split-amounts">Paid {fmtMoneyIn(s.paid, trip.budget_currency)} · share {fmtMoneyIn(s.share, trip.budget_currency)}</div>
                 <div className="split-bar-wrap">
                   <div className="split-bar-track">
                     <div className="split-bar-fill" style={{ width: `${paidPct}%`, background: barColor }} />
@@ -819,7 +821,7 @@ function SplitBudget({ splits, trip }: { splits: TripSplit[] | undefined; trip: 
               </div>
               <div className="split-balance" style={{ color: balColor }}>
                 <div className="split-balance-amount">
-                  {isOwed ? '+' : isOwes ? '-' : '±'}{fmtMoney(Math.abs(balance))}
+                  {isOwed ? '+' : isOwes ? '-' : '±'}{fmtMoneyIn(Math.abs(balance), trip.budget_currency)}
                 </div>
                 <div className="split-balance-label">
                   {isOwed ? 'gets back' : isOwes ? 'owes' : 'even'}
@@ -841,7 +843,7 @@ function SplitBudget({ splits, trip }: { splits: TripSplit[] | undefined; trip: 
                 <span className="settle-av settle-av-to">{getInitials(row.toId)}</span>
                 <span className="settle-names">{getName(row.fromId)} → {getName(row.toId)}</span>
               </div>
-              <div className="settle-amount">{fmtMoney(row.amount)}</div>
+              <div className="settle-amount">{fmtMoneyIn(row.amount, trip.budget_currency)}</div>
               <button
                 className="btn"
                 onClick={() => setDismissed((prev) => new Set([...prev, `${row.fromId}-${row.toId}`]))}
