@@ -7,6 +7,7 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 - **Pipeline** — Kanban board moving trips through Dreaming → Planning → Booked → Upcoming → Archived
 - **Trip detail tabs** — Overview, Itinerary, Bookings, Budget, Packing, Documents, Notes per trip
 - **Inbox** — captures forwarded booking confirmation emails and suggests trip assignments
+- **Insights** — live weather, packing, passport-expiry and stale-trip nudges, regenerated daily
 - **Calendar** — month view showing all trip date ranges at a glance
 - **Add Trip wizard** — 3-step modal: destination, categories/travelers, dates/budget
 - **Theming** — light/dark mode, 5 accent colors (Clay, Olive, Ink, Plum, Sand), 3 density levels
@@ -20,6 +21,7 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 | Routing | React Router v6 |
 | Backend | Supabase (Postgres + magic-link auth + Realtime) |
 | AI | Anthropic Claude Haiku (email parsing via `@anthropic-ai/sdk`) |
+| Weather / geocoding | [Open-Meteo](https://open-meteo.com) — no API key, no account |
 | Unit tests | Vitest + Testing Library (100% branch coverage enforced) |
 | E2E / visual tests | Playwright (Chromium, with screenshot regression) |
 | Styling | Vanilla CSS with design-token variables |
@@ -27,7 +29,7 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 
 ## Prerequisites
 
-- Node.js ≥ 20
+- Node.js ≥ 24 (see `.nvmrc`)
 - A [Supabase](https://supabase.com) account
 - An [Anthropic](https://console.anthropic.com) account (for the email ingestion API)
 - A [Vercel](https://vercel.com) account (for deployment)
@@ -44,7 +46,7 @@ Supabase provides the database, authentication, and real-time subscriptions.
    - **Project URL** → `VITE_SUPABASE_URL` and `SUPABASE_URL`
    - **anon / public key** → `VITE_SUPABASE_ANON_KEY`
    - **service_role key** → `SUPABASE_SERVICE_ROLE_KEY` (keep this secret — it bypasses row-level security)
-4. Run the database migrations in `supabase/migrations/` against your project (via the Supabase CLI or the SQL editor in the dashboard).
+4. Run the database migrations in `supabase/migrations/` against your project (via the Supabase CLI or the SQL editor in the dashboard). These create the `trips`, `trip_details`, `travelers`, `insights` and `inbox_items` tables, their row-level-security policies, and the Realtime publication.
 5. In **Realtime → Tables**, make sure `inbox_items` is enabled for broadcasts so the UI receives live updates.
 
 ### 2. Anthropic
@@ -55,7 +57,13 @@ Claude Haiku parses forwarded booking emails into structured data.
 2. Go to **API Keys** and create a new key.
 3. Copy the key → `ANTHROPIC_API_KEY`.
 
-### 3. Vercel (deployment)
+### 3. Open-Meteo
+
+Nothing to set up. [Open-Meteo](https://open-meteo.com) powers the weather insights and
+destination geocoding, and needs no API key, account, or billing details — the free
+non-commercial tier is well above what the daily insights cron uses.
+
+### 4. Vercel (deployment)
 
 1. Import the repository in the [Vercel dashboard](https://vercel.com/new).
 2. Set the **Root Directory** to `.` (the repo root) — Vite and the API functions are both configured from `vite.config.ts` and `vercel.json`.
@@ -78,6 +86,17 @@ curl -X POST https://<your-vercel-domain>/api/inbox/ingest \
     }
   }'
 ```
+
+To trigger an insights refresh by hand (the cron does this daily at 06:00 UTC):
+
+```bash
+curl -X POST https://<your-vercel-domain>/api/insights/refresh \
+  -H "Content-Type: application/json" \
+  -H "x-ingest-secret: <INGEST_SECRET>" \
+  -d '{ "userId": "<supabase-user-uuid>" }'
+```
+
+Omit the body to refresh every user.
 
 ## Local setup
 
@@ -112,6 +131,7 @@ Both values are available in your Supabase project under **Settings → API**.
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service-role key — bypasses RLS; keep secret |
 | `ANTHROPIC_API_KEY` | Anthropic API key used by Claude Haiku to parse emails |
 | `INGEST_SECRET` | Arbitrary secret sent in `x-ingest-secret` header to authenticate ingest requests |
+| `CRON_SECRET` | Secret Vercel Cron sends as `Authorization: Bearer …` when invoking the insights refresh |
 
 `SUPABASE_SERVICE_ROLE_KEY` and `ANTHROPIC_API_KEY` are available in your Supabase project (**Settings → API**) and [Anthropic Console](https://console.anthropic.com) respectively.
 
@@ -164,6 +184,10 @@ graph TD
     Vercel -->|"parse email body"| Claude["Anthropic\nClaude Haiku"]
     Claude -->|"structured booking JSON"| Vercel
     Vercel -->|"insert / update inbox_items"| Supabase
+    Cron["Vercel Cron\ndaily 06:00 UTC"] -->|"GET /api/insights/refresh"| Vercel
+    Vercel -->|"geocode + forecast"| OpenMeteo["Open-Meteo\n(no API key)"]
+    OpenMeteo -->|"daily forecast"| Vercel
+    Vercel -->|"upsert insights"| Supabase
 ```
 
 ### Code layout
@@ -174,13 +198,35 @@ apps/web/
     app/         — AppLayout, AppContext (all global state), router, Login
     components/  — PipelineDashboard, InboxDashboard, CalendarDashboard,
                    ArchiveDashboard, TripCard, modals/, …
-    lib/         — types.ts, db.ts (Supabase CRUD + Realtime), data.ts (fixtures), utils.ts
+    lib/         — types.ts, db.ts (Supabase CRUD + Realtime), data.ts (fixtures), utils.ts,
+                   rows.ts (row → domain mappers), insights.ts (pure insight rules),
+                   clients/openMeteo.ts (weather + geocoding)
   api/
     inbox/
       ingest.ts  — POST /api/inbox/ingest (Claude-powered email parsing)
+    insights/
+      refresh.ts — GET/POST /api/insights/refresh (daily cron; regenerates insights)
+supabase/
+  migrations/    — schema, RLS policies, Realtime publication
 ```
 
 All state lives in `AppContext`. Every mutation flows through `AppContext` actions → `lib/db.ts` → Supabase. Components read state via the `useApp()` hook and never manage trip data locally.
+
+### Insights
+
+`lib/insights.ts` holds the insight rules as pure functions — each takes already-fetched
+data plus an explicit `today`, so they are deterministic and need no network. Only the
+weather rule needs an external source; `lib/clients/openMeteo.ts` fetches it, taking an
+injected `fetch` so tests stub it and CI never touches the network.
+
+`api/insights/refresh.ts` glues the two together on a daily Vercel cron: it loads each
+user's trips, geocodes and forecasts only the trips departing within Open-Meteo's
+~14-day horizon, then upserts the generated insights. Insight ids are deterministic
+(`wx-<tripId>`, `pack-<tripId>`, …), so re-running the cron updates rows in place
+instead of piling up duplicates.
+
+`price_drop` insights remain fixtures — every flight-price API (Duffel, Amadeus)
+requires a registered key, which this integration deliberately avoids.
 
 The `api/inbox/ingest.ts` endpoint runs server-side on Vercel Functions. It accepts a forwarded email, creates a placeholder inbox item, calls Claude Haiku to extract booking details, and updates the item with parsed data or marks it `needs_review` if confidence is below 0.5. The inbox subscribes to Supabase Realtime so the UI updates automatically when items are inserted or updated.
 
