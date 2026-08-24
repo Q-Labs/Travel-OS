@@ -32,7 +32,9 @@ function makeSupabaseMock(
   tripRows: unknown[] = [],
   insertError: unknown = null,
   updateError: unknown = null,
+  tokenRow: unknown = null,
 ) {
+  const insertSpy = vi.fn().mockResolvedValue({ error: insertError });
   const chain: MockSupabaseChain = {
     from: vi.fn(),
     select: vi.fn(),
@@ -58,17 +60,42 @@ function makeSupabaseMock(
     }
     if (table === 'inbox_items') {
       return {
-        insert: vi.fn().mockResolvedValue({ error: insertError }),
+        insert: insertSpy,
         update: vi.fn().mockReturnValue({
           eq: vi.fn().mockResolvedValue({ error: updateError }),
+        }),
+      };
+    }
+    if (table === 'user_inbox_tokens') {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: tokenRow, error: null }),
+          }),
         }),
       };
     }
     return chain;
   });
 
-  return chain;
+  return Object.assign(chain, { insertSpy });
 }
+
+function makeProviderRequest(provider: string, body: unknown, secret = 'test-secret'): Request {
+  return new Request(`http://localhost/api/inbox/ingest?provider=${provider}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-ingest-secret': secret },
+    body: JSON.stringify(body),
+  });
+}
+
+const POSTMARK_PAYLOAD = {
+  From: 'automated@airbnb.com',
+  OriginalRecipient: 'quincy+a1b2c3@travelos.app',
+  Subject: 'Reservation confirmed',
+  TextBody: 'Riad Dar Anika, 4 nights.',
+  Date: 'Mon, 20 Apr 2026 12:00:00 -0400',
+};
 
 function makeAnthropicMock(jsonResponse: string): MockAnthropic {
   return {
@@ -429,5 +456,68 @@ describe('ingest handler', () => {
     const res = await handler(makeRequest('POST', SECRET, VALID_BODY));
     expect(res.status).toBe(200);
     expect(capturedUpdatePayload).toMatchObject({ status: 'needs_review', note: 'Parse error' });
+  });
+
+  describe('inbound email webhooks', () => {
+    it('resolves the user from the recipient token and ingests the mail', async () => {
+      const supabase = makeSupabaseMock([], null, null, { user_id: 'user-from-token' });
+      const handler = createIngestHandler({
+        anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never,
+        supabase: supabase as never,
+      });
+      const res = await handler(makeProviderRequest('postmark', POSTMARK_PAYLOAD));
+      expect(res.status).toBe(200);
+      const inserted = supabase.insertSpy.mock.calls[0]?.[0] as Record<string, unknown>;
+      expect(inserted['user_id']).toBe('user-from-token');
+      expect(inserted['source']).toBe('postmark');
+      expect(inserted['subject']).toBe('Reservation confirmed');
+      expect(inserted['from_address']).toBe('automated@airbnb.com');
+    });
+
+    it('rejects an unknown provider without creating an item', async () => {
+      const supabase = makeSupabaseMock([], null, null, { user_id: 'u1' });
+      const handler = createIngestHandler({
+        anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never,
+        supabase: supabase as never,
+      });
+      const res = await handler(makeProviderRequest('mailgun', POSTMARK_PAYLOAD));
+      expect(res.status).toBe(400);
+      expect(supabase.insertSpy).not.toHaveBeenCalled();
+    });
+
+    it('rejects a payload missing required fields', async () => {
+      const supabase = makeSupabaseMock([], null, null, { user_id: 'u1' });
+      const handler = createIngestHandler({
+        anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never,
+        supabase: supabase as never,
+      });
+      const res = await handler(makeProviderRequest('postmark', { From: 'a@b.com' }));
+      expect(res.status).toBe(400);
+      expect(supabase.insertSpy).not.toHaveBeenCalled();
+    });
+
+    it('rejects a recipient with no plus-tag token', async () => {
+      const supabase = makeSupabaseMock([], null, null, { user_id: 'u1' });
+      const handler = createIngestHandler({
+        anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never,
+        supabase: supabase as never,
+      });
+      const res = await handler(
+        makeProviderRequest('postmark', { ...POSTMARK_PAYLOAD, OriginalRecipient: 'quincy@travelos.app' }),
+      );
+      expect(res.status).toBe(400);
+      expect(supabase.insertSpy).not.toHaveBeenCalled();
+    });
+
+    it('rejects an unrecognised inbox token', async () => {
+      const supabase = makeSupabaseMock([], null, null, null);
+      const handler = createIngestHandler({
+        anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never,
+        supabase: supabase as never,
+      });
+      const res = await handler(makeProviderRequest('postmark', POSTMARK_PAYLOAD));
+      expect(res.status).toBe(404);
+      expect(supabase.insertSpy).not.toHaveBeenCalled();
+    });
   });
 });

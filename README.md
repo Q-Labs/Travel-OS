@@ -6,7 +6,7 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 
 - **Pipeline** — Kanban board moving trips through Dreaming → Planning → Booked → Upcoming → Archived
 - **Trip detail tabs** — Overview, Itinerary, Bookings, Budget, Packing, Documents, Notes per trip
-- **Inbox** — captures forwarded booking confirmation emails and suggests trip assignments
+- **Inbox** — forward a booking confirmation to your personal address and it is parsed, matched to a trip, and filed automatically
 - **Insights** — live weather, packing, passport-expiry and stale-trip nudges, regenerated daily
 - **Calendar** — month view showing all trip date ranges at a glance
 - **Add Trip wizard** — 3-step modal: destination, categories/travelers, dates/budget
@@ -84,6 +84,37 @@ curl -X POST https://<your-vercel-domain>/api/inbox/ingest \
       "receivedAt": "2026-04-25",
       "text": "Flight AA123 JFK→LAX confirmed for 2 May 2026."
     }
+  }'
+```
+
+### Pointing an email provider at the inbox
+
+The ingest endpoint also accepts inbound-email webhooks at
+`POST /api/inbox/ingest?provider=<postmark|sendgrid|cloudflare>`. A webhook has no way to
+know a Supabase user id, so the user is resolved from the recipient address instead:
+each user gets a routing token (`user_inbox_tokens`, handed out by trigger on signup),
+and mail addressed to `anything+<token>@yourdomain` is attributed to that user.
+
+Either provider works, and both have a free path:
+
+- **Cloudflare Email Routing** — free, requires a domain on Cloudflare. Write an Email
+  Worker that POSTs `{ from, to, subject, text }` to the endpoint.
+- **Postmark inbound** — free inbound tier. Point the server's inbound webhook at
+  `…/api/inbox/ingest?provider=postmark`.
+
+Swapping between them is configuration only; the payload adapters live in
+`lib/inboundEmail.ts`.
+
+```bash
+curl -X POST "https://<your-vercel-domain>/api/inbox/ingest?provider=postmark" \
+  -H "Content-Type: application/json" \
+  -H "x-ingest-secret: <INGEST_SECRET>" \
+  -d '{
+    "From": "automated@airbnb.com",
+    "OriginalRecipient": "quincy+<token>@yourdomain",
+    "Subject": "Reservation confirmed",
+    "TextBody": "Riad Dar Anika, 4 nights.",
+    "Date": "Mon, 20 Apr 2026 12:00:00 -0400"
   }'
 ```
 
@@ -200,6 +231,7 @@ apps/web/
                    ArchiveDashboard, TripCard, modals/, …
     lib/         — types.ts, db.ts (Supabase CRUD + Realtime), data.ts (fixtures), utils.ts,
                    rows.ts (row → domain mappers), insights.ts (pure insight rules),
+                   inboundEmail.ts (provider webhook adapters),
                    clients/openMeteo.ts (weather + geocoding)
   api/
     inbox/
@@ -228,7 +260,10 @@ instead of piling up duplicates.
 `price_drop` insights remain fixtures — every flight-price API (Duffel, Amadeus)
 requires a registered key, which this integration deliberately avoids.
 
-The `api/inbox/ingest.ts` endpoint runs server-side on Vercel Functions. It accepts a forwarded email, creates a placeholder inbox item, calls Claude Haiku to extract booking details, and updates the item with parsed data or marks it `needs_review` if confidence is below 0.5. The inbox subscribes to Supabase Realtime so the UI updates automatically when items are inserted or updated.
+The `api/inbox/ingest.ts` endpoint runs server-side on Vercel Functions. It accepts either a
+direct JSON body (carrying an explicit `userId`) or an inbound-email webhook via
+`?provider=…`, in which case `lib/inboundEmail.ts` normalises the provider's payload and the
+user is resolved from the recipient's plus-tag token. It then accepts a forwarded email, creates a placeholder inbox item, calls Claude Haiku to extract booking details, and updates the item with parsed data or marks it `needs_review` if confidence is below 0.5. The inbox subscribes to Supabase Realtime so the UI updates automatically when items are inserted or updated.
 
 ## Development workflow
 

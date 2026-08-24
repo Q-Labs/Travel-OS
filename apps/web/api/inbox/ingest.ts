@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
+import { extractInboxToken, normalizeInboundEmail } from '../../src/lib/inboundEmail';
 
 interface IngestBody {
   userId: string;
@@ -18,6 +19,12 @@ interface ParsedResult {
   suggested_trip: string | null;
   suggested_confidence: number;
 }
+
+type ResolvedIngest = {
+  userId: string;
+  source: string;
+  raw: IngestBody['raw'];
+};
 
 function isValidBody(b: unknown): b is IngestBody {
   if (!b || typeof b !== 'object') return false;
@@ -49,22 +56,59 @@ export function createIngestHandler({
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let body: IngestBody;
+    let payload: unknown;
     try {
-      const raw = await req.json();
-      if (!isValidBody(raw)) {
-        return Response.json({ error: 'Invalid body' }, { status: 400 });
-      }
-      body = raw;
+      payload = await req.json();
     } catch {
       return Response.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    // `?provider=postmark|sendgrid|cloudflare` marks an inbound-email webhook.
+    // Those callers can't supply a userId — they only know the address the mail
+    // was sent to — so the user is resolved from the recipient's plus-tag token.
+    const provider = new URL(req.url).searchParams.get('provider');
+    let body: ResolvedIngest;
+
+    if (provider !== null) {
+      const email = normalizeInboundEmail(provider, payload);
+      if (!email) {
+        return Response.json({ error: 'Unsupported or malformed inbound payload' }, { status: 400 });
+      }
+      const token = extractInboxToken(email.to);
+      if (!token) {
+        return Response.json({ error: 'Recipient carries no inbox token' }, { status: 400 });
+      }
+      const { data: tokenRow } = await supabase
+        .from('user_inbox_tokens')
+        .select('user_id')
+        .eq('token', token)
+        .maybeSingle();
+      const userId = (tokenRow as { user_id: string } | null)?.user_id;
+      if (!userId) {
+        return Response.json({ error: 'Unknown inbox token' }, { status: 404 });
+      }
+      body = {
+        userId,
+        source: provider,
+        raw: {
+          subject: email.subject,
+          from: email.from,
+          receivedAt: email.receivedAt,
+          text: email.text,
+        },
+      };
+    } else {
+      if (!isValidBody(payload)) {
+        return Response.json({ error: 'Invalid body' }, { status: 400 });
+      }
+      body = { userId: payload.userId, source: payload.source ?? 'email', raw: payload.raw };
     }
 
     const id = randomUUID();
     const { error: insertError } = await supabase.from('inbox_items').insert({
       id,
       user_id: body.userId,
-      source: body.source ?? 'email',
+      source: body.source,
       subject: body.raw.subject,
       from_address: body.raw.from,
       received_ago: body.raw.receivedAt,
