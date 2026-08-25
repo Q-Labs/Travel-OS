@@ -84,13 +84,14 @@ describe('fetchForecast', () => {
         },
       }),
     );
-    expect(await fetchForecast(38.7, -9.1, 2, fetchFn)).toEqual([
+    expect(await fetchForecast(38.7, -9.1, { startDate: '2026-04-21', endDate: '2026-04-22' }, fetchFn)).toEqual([
       { date: '2026-04-21', tempMaxC: 18.4, tempMinC: 11.2, precipitationProbability: 10 },
       { date: '2026-04-22', tempMaxC: 22.1, tempMinC: 13.9, precipitationProbability: 80 },
     ]);
     const url = String(fetchFn.mock.calls[0]?.[0]);
     expect(url).toContain('api.open-meteo.com');
-    expect(url).toContain('forecast_days=2');
+    expect(url).toContain('start_date=2026-04-21');
+    expect(url).toContain('end_date=2026-04-22');
   });
 
   it('treats null precipitation probability as zero', async () => {
@@ -104,21 +105,21 @@ describe('fetchForecast', () => {
         },
       }),
     );
-    expect((await fetchForecast(1, 2, 1, fetchFn))[0]?.precipitationProbability).toBe(0);
+    expect((await fetchForecast(1, 2, { startDate: '2026-04-21', endDate: '2026-04-21' }, fetchFn))[0]?.precipitationProbability).toBe(0);
   });
 
   it('returns an empty list when the payload has no daily block', async () => {
     const fetchFn = vi.fn().mockResolvedValue(jsonResponse({}));
-    expect(await fetchForecast(1, 2, 1, fetchFn)).toEqual([]);
+    expect(await fetchForecast(1, 2, { startDate: '2026-04-21', endDate: '2026-04-21' }, fetchFn)).toEqual([]);
   });
 
   it('returns an empty list on a non-ok response', async () => {
     const fetchFn = vi.fn().mockResolvedValue(jsonResponse({}, false));
-    expect(await fetchForecast(1, 2, 1, fetchFn)).toEqual([]);
+    expect(await fetchForecast(1, 2, { startDate: '2026-04-21', endDate: '2026-04-21' }, fetchFn)).toEqual([]);
   });
 
   it('returns an empty list when the request throws', async () => {
     const fetchFn = vi.fn().mockRejectedValue(new Error('network down'));
-    expect(await fetchForecast(1, 2, 1, fetchFn)).toEqual([]);
+    expect(await fetchForecast(1, 2, { startDate: '2026-04-21', endDate: '2026-04-21' }, fetchFn)).toEqual([]);
   });
 });

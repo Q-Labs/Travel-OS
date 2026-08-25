@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useApp } from '../../app/AppContext';
 import { TRAVELERS } from '../../lib/data';
 import type { Trip, TripCategory } from '../../lib/types';
@@ -42,12 +42,16 @@ export function AddTripModal() {
   });
 
   const [lookingUp, setLookingUp] = useState(false);
+  // What a previous lookup put into region/country. Anything the user typed is
+  // never recorded here, so their input always wins over a later lookup.
+  const autofilled = useRef({ region: '', country: '' });
 
   const close = () => setShowModal(false);
 
   /**
    * Fills in region and country from the destination via Open-Meteo's geocoder.
-   * Anything the user already typed wins — this only fills blanks.
+   * Anything the user typed themselves wins; values a previous lookup supplied
+   * are replaced, so they can't linger after the destination changes.
    */
   const autofillFromDestination = async () => {
     const name = data.destination.trim();
@@ -56,11 +60,16 @@ export function AddTripModal() {
     const place = await geocode(name, (url, init) => fetch(url, init));
     setLookingUp(false);
     if (!place) return;
+    // A field is replaced when it is blank, or when it still holds what an
+    // earlier lookup put there -- otherwise changing the destination from
+    // Lisbon to Kyoto would save the trip with country "Portugal".
+    const keep = (current: string, previous: string) => current !== '' && current !== previous;
     setData((d) => ({
       ...d,
-      region: d.region || place.region,
-      country: d.country || place.country,
+      region: keep(d.region, autofilled.current.region) ? d.region : place.region,
+      country: keep(d.country, autofilled.current.country) ? d.country : place.country,
     }));
+    autofilled.current = { region: place.region, country: place.country };
   };
 
   const toggleCat = (k: TripCategory) =>

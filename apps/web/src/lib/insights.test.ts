@@ -7,6 +7,7 @@ import {
   packingReminderInsight,
   passportExpiryInsights,
   staleStageInsight,
+  forecastRange,
   tripsNeedingForecast,
   weatherInsight,
 } from './insights';
@@ -303,5 +304,59 @@ describe('passportExpiryInsights — finished trips', () => {
       documents: [{ type: 'passport', title: 'Quincy passport', expiry: '2026-02-01' }],
     });
     expect(passportExpiryInsights(trip, detail, TODAY)).toHaveLength(0);
+  });
+});
+
+describe('review findings', () => {
+  it('gives every passport on a trip a distinct id even when titles match', () => {
+    const trip = makeTrip({ start_date: '2026-07-01', end_date: '2026-07-10' });
+    const detail = makeDetail({
+      documents: [
+        { type: 'passport', title: 'Family passports', expiry: '2026-09-01' },
+        { type: 'passport', title: 'Family passports', expiry: '2026-09-15' },
+      ],
+    });
+    const ids = passportExpiryInsights(trip, detail, TODAY).map((i) => i.id);
+    expect(new Set(ids).size).toBe(2);
+  });
+
+  it('still forecasts a trip that has already started', () => {
+    const started = makeTrip({ id: 'now', start_date: '2026-04-18', end_date: '2026-04-24' });
+    expect(tripsNeedingForecast([started], TODAY).map((t) => t.id)).toEqual(['now']);
+  });
+
+  it('excludes a trip that has already finished', () => {
+    const done = makeTrip({ id: 'done', start_date: '2026-04-01', end_date: '2026-04-05' });
+    expect(tripsNeedingForecast([done], TODAY)).toHaveLength(0);
+  });
+
+  it('reports the date window a trip actually needs forecasting for', () => {
+    const trip = makeTrip({ start_date: '2026-04-25', end_date: '2026-04-28' });
+    expect(forecastRange(trip, TODAY)).toEqual({ startDate: '2026-04-25', endDate: '2026-04-28' });
+  });
+
+  it('clamps the window to what Open-Meteo can actually answer', () => {
+    const trip = makeTrip({ start_date: '2026-04-25', end_date: '2026-12-31' });
+    const range = forecastRange(trip, TODAY);
+    expect(range?.endDate).toBe('2026-05-04');
+  });
+
+  it('starts an in-progress trip window at today, not in the past', () => {
+    const trip = makeTrip({ start_date: '2026-04-18', end_date: '2026-04-24' });
+    expect(forecastRange(trip, TODAY)?.startDate).toBe('2026-04-20');
+  });
+
+  it('has no window for an undated trip', () => {
+    expect(forecastRange(makeTrip(), TODAY)).toBeNull();
+  });
+
+  it('uses the start date alone for a single-day trip with no end date', () => {
+    const trip = makeTrip({ start_date: '2026-04-25' });
+    expect(forecastRange(trip, TODAY)).toEqual({ startDate: '2026-04-25', endDate: '2026-04-25' });
+  });
+
+  it('has no window once the whole trip is beyond the horizon', () => {
+    const trip = makeTrip({ start_date: '2026-09-01', end_date: '2026-09-10' });
+    expect(forecastRange(trip, TODAY)).toBeNull();
   });
 });

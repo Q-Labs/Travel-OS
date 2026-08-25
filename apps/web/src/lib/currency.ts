@@ -51,3 +51,27 @@ export function fmtMoneyIn(amount: number, currency: string): string {
     return `${currency} ${amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
   }
 }
+
+/**
+ * Totals only the amounts already held in `currency`, and reports how many were
+ * left out.
+ *
+ * Summing mixed currencies produces a meaningless number (¥300,000 + $2,000),
+ * and converting would need live rates the dashboards don't have. Excluding and
+ * disclosing is the honest option.
+ */
+export function sumInCurrency<T>(
+  items: T[],
+  currency: string,
+  amountOf: (item: T) => number,
+  currencyOf: (item: T) => string,
+): { total: number; counted: number; excluded: number } {
+  let total = 0;
+  let counted = 0;
+  for (const item of items) {
+    if (currencyOf(item) !== currency) continue;
+    total += amountOf(item) || 0;
+    counted += 1;
+  }
+  return { total, counted, excluded: items.length - counted };
+}

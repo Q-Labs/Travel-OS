@@ -60,14 +60,17 @@ export async function geocode(name: string, fetchFn: FetchFn): Promise<GeocodeRe
 export async function fetchForecast(
   lat: number,
   lon: number,
-  days: number,
+  range: { startDate: string; endDate: string },
   fetchFn: FetchFn,
 ): Promise<DailyForecast[]> {
   const params = new URLSearchParams({
     latitude: String(lat),
     longitude: String(lon),
     daily: 'temperature_2m_max,temperature_2m_min,precipitation_probability_max',
-    forecast_days: String(days),
+    // Explicit dates rather than forecast_days: the trip's window is what
+    // matters, not the next N days from now.
+    start_date: range.startDate,
+    end_date: range.endDate,
     timezone: 'auto',
   });
   try {

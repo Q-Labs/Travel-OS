@@ -66,7 +66,8 @@ export async function fetchInsights(userId: string): Promise<Insight[]> {
   const { data, error } = await supabase
     .from('insights')
     .select('*')
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .is('dismissed_at', null);
   if (error || !data) return [];
   return data as Insight[];
 }
@@ -139,10 +140,16 @@ export async function upsertTripDetail(
   if (error) console.warn('[db] upsertTripDetail:', error.message);
 }
 
+/**
+ * Records a dismissal instead of deleting the row. The nightly cron rewrites
+ * generated insights under deterministic ids, so a deleted one would simply
+ * reappear the next morning; a dismissed one is skipped by `fetchInsights`
+ * and left alone by the cron's upsert.
+ */
 export async function deleteInsight(userId: string, id: string): Promise<void> {
   const { error } = await supabase
     .from('insights')
-    .delete()
+    .update({ dismissed_at: new Date().toISOString() })
     .eq('id', id)
     .eq('user_id', userId);
   if (error) console.warn('[db] deleteInsight:', error.message);

@@ -1,13 +1,12 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { fetchForecast, geocode, type FetchFn } from '../../src/lib/clients/openMeteo';
+import { fetchForecast, geocode, type FetchFn } from '../../apps/web/src/lib/clients/openMeteo';
 import {
-  FORECAST_HORIZON_DAYS,
+  forecastTargets,
   generateInsights,
-  tripsNeedingForecast,
   type DailyForecast,
-} from '../../src/lib/insights';
-import { rowToTrip, rowToTripDetail } from '../../src/lib/rows';
-import type { Insight, TripDetail } from '../../src/lib/types';
+} from '../../apps/web/src/lib/insights';
+import { rowToTrip, rowToTripDetail } from '../../apps/web/src/lib/rows';
+import type { Insight, TripDetail } from '../../apps/web/src/lib/types';
 
 /**
  * Regenerates derived insights (weather, packing, passport, stale-stage) for
@@ -56,7 +55,10 @@ export function createInsightsHandler({
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const today = now();
+    // daysBetween rounds, so a mid-afternoon manual trigger would otherwise
+    // land a day off. Every rule reasons in whole days from midnight.
+    const raw = now();
+    const today = new Date(Date.UTC(raw.getUTCFullYear(), raw.getUTCMonth(), raw.getUTCDate()));
     const scopedUserId = await readUserId(req);
 
     let userIds: string[];
@@ -71,13 +73,15 @@ export function createInsightsHandler({
     }
 
     let written = 0;
+    let failed = 0;
     for (const userId of userIds) {
+      try {
       const { data: tripRows, error: tripsError } = await supabase
         .from('trips')
         .select('*')
         .eq('user_id', userId);
       if (tripsError || !tripRows) {
-        return Response.json({ error: 'Failed to load trips' }, { status: 500 });
+        throw new Error('Failed to load trips');
       }
       const trips = (tripRows as Record<string, unknown>[]).map(rowToTrip);
 
@@ -90,31 +94,53 @@ export function createInsightsHandler({
         details[row['trip_id'] as string] = rowToTripDetail(row);
       }
 
-      // Only geocode trips close enough for Open-Meteo to forecast usefully.
+      // Only geocode trips close enough for Open-Meteo to forecast usefully,
+      // and ask about the trip's own dates rather than the next N days.
       const forecasts: Record<string, DailyForecast[]> = {};
-      for (const trip of tripsNeedingForecast(trips, today)) {
+      for (const { trip, range } of forecastTargets(trips, today)) {
         const place = await geocode(trip.destination, fetchFn);
         if (!place) continue;
-        const daily = await fetchForecast(place.lat, place.lon, FORECAST_HORIZON_DAYS, fetchFn);
+        const daily = await fetchForecast(place.lat, place.lon, range, fetchFn);
         if (daily.length > 0) forecasts[trip.id] = daily;
       }
 
       const insights = generateInsights({ trips, details, forecasts, today });
-      if (insights.length === 0) continue;
 
-      const { error: upsertError } = await supabase
-        .from('insights')
-        .upsert(
-          insights.map((insight: Insight) => ({ ...insight, user_id: userId })),
-          { onConflict: 'id,user_id' },
-        );
-      if (upsertError) {
-        return Response.json({ error: 'Failed to persist insights' }, { status: 500 });
+      if (insights.length > 0) {
+        // `dismissed_at` is deliberately absent from the payload: on conflict
+        // only the listed columns are updated, so a dismissal survives the
+        // nightly rewrite instead of being resurrected.
+        const { error: upsertError } = await supabase
+          .from('insights')
+          .upsert(
+            insights.map((insight: Insight) => ({ ...insight, user_id: userId, generated: true })),
+            { onConflict: 'id,user_id' },
+          );
+        if (upsertError) throw new Error('Failed to persist insights');
+        written += insights.length;
       }
-      written += insights.length;
+
+      // Reconcile: drop generated insights whose condition no longer holds
+      // (packing finished, trip departed). Scoped to `generated` so seeded and
+      // hand-authored rows are never touched.
+      const live = insights.map((i) => i.id);
+      let stale = supabase.from('insights').delete().eq('user_id', userId).eq('generated', true);
+      if (live.length > 0) stale = stale.not('id', 'in', `(${live.join(',')})`);
+      const { error: pruneError } = await stale;
+      if (pruneError) throw new Error('Failed to prune insights');
+      } catch {
+        // One user's bad data must not starve everyone queued behind them.
+        failed += 1;
+      }
     }
 
-    return Response.json({ users: userIds.length, insights: written }, { status: 200 });
+    if (failed > 0 && failed === userIds.length) {
+      return Response.json({ error: 'Every user failed to refresh' }, { status: 500 });
+    }
+    return Response.json(
+      { users: userIds.length, insights: written, failed },
+      { status: 200 },
+    );
   };
 }
 

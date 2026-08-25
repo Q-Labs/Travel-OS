@@ -30,12 +30,23 @@ type Tables = {
   trips?: { data: unknown; error: unknown };
   trip_details?: { data: unknown; error: unknown };
   insights?: { error: unknown };
+  prune?: { error: unknown };
 };
 
 function makeSupabase(tables: Tables = {}) {
   const upsert = vi.fn().mockResolvedValue({ error: tables.insights?.error ?? null });
+  // Reconciliation prunes generated insights that no longer apply.
+  const del = vi.fn();
   const from = vi.fn((table: string) => {
-    if (table === 'insights') return { upsert };
+    if (table === 'insights') {
+      const pruneChain: Record<string, unknown> = {};
+      pruneChain['eq'] = vi.fn(() => pruneChain);
+      pruneChain['not'] = vi.fn(() => pruneChain);
+      pruneChain['then'] = (ok: (v: unknown) => unknown, bad: (e: unknown) => unknown) =>
+        Promise.resolve({ error: tables.prune?.error ?? null }).then(ok, bad);
+      del.mockReturnValue(pruneChain);
+      return { upsert, delete: del };
+    }
     const result = table === 'trips'
       ? tables.trips ?? { data: [TRIP_ROW], error: null }
       : tables.trip_details ?? { data: [DETAIL_ROW], error: null };
@@ -46,7 +57,7 @@ function makeSupabase(tables: Tables = {}) {
       Promise.resolve(result).then(res, rej);
     return chain;
   });
-  return { client: { from } as unknown as SupabaseClient, from, upsert };
+  return { client: { from } as unknown as SupabaseClient, from, upsert, del };
 }
 
 function okForecast() {
@@ -141,7 +152,7 @@ describe('createInsightsHandler', () => {
     const { client } = makeSupabase();
     const handler = createInsightsHandler({ supabase: client, fetchFn: okForecast(), now });
     const res = await handler(post(undefined, { userId: 'u1' }));
-    expect(await res.json()).toEqual({ users: 1, insights: 2 });
+    expect(await res.json()).toEqual({ users: 1, insights: 2, failed: 0 });
   });
 
   it('discovers users from the trips table when no userId is given', async () => {
@@ -248,5 +259,30 @@ describe('production wiring', () => {
     await defaultFetch('https://example.test/');
     expect(spy).toHaveBeenCalledWith('https://example.test/');
     spy.mockRestore();
+  });
+});
+
+describe('resilience and reconciliation', () => {
+  it('prunes generated insights that no longer apply', async () => {
+    const { client, del } = makeSupabase();
+    const handler = createInsightsHandler({ supabase: client, fetchFn: okForecast(), now });
+    await handler(post(undefined, { userId: 'u1' }));
+    expect(del).toHaveBeenCalled();
+  });
+
+  it('keeps going when one user fails instead of starving the rest', async () => {
+    const { client } = makeSupabase({ insights: { error: { message: 'boom' } } });
+    const handler = createInsightsHandler({ supabase: client, fetchFn: okForecast(), now });
+    const res = await handler(post());
+    // One user, and that user failed -- but the run reports rather than throwing.
+    expect(res.status).toBe(500);
+    expect(await res.json()).toMatchObject({ error: expect.any(String) });
+  });
+
+  it('surfaces a failed prune rather than reporting success', async () => {
+    const { client } = makeSupabase({ prune: { error: { message: 'boom' } } });
+    const handler = createInsightsHandler({ supabase: client, fetchFn: okForecast(), now });
+    const res = await handler(post(undefined, { userId: 'u1' }));
+    expect(res.status).toBe(500);
   });
 });

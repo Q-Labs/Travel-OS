@@ -79,7 +79,7 @@ None require an account, API key, or billing details.
 1. Import the repository in the [Vercel dashboard](https://vercel.com/new).
 2. Set the **Root Directory** to `.` (the repo root) — Vite and the API functions are both configured from `vite.config.ts` and `vercel.json`.
 3. Add all environment variables from the table below in **Settings → Environment Variables**.
-4. Deploy. Vercel automatically routes `apps/web/api/**` as serverless functions.
+4. Deploy. Vercel turns each file under the repo-root `api/` directory into a serverless function — that location is the convention it discovers, which is why the functions live there rather than beside the app source.
 
 To send a test email to the ingest endpoint after deploying:
 
@@ -257,11 +257,13 @@ apps/web/
                    currency.ts (conversion + formatting),
                    clients/ — openMeteo.ts (weather + geocoding), frankfurter.ts (FX),
                               wikipedia.ts (destination summaries)
-  api/
-    inbox/
-      ingest.ts  — POST /api/inbox/ingest (Claude-powered email parsing)
-    insights/
-      refresh.ts — GET/POST /api/insights/refresh (daily cron; regenerates insights)
+api/             — Vercel serverless functions (must sit at the repo root)
+  inbox/
+    ingest.ts    — POST /api/inbox/ingest (Claude-powered email parsing)
+  insights/
+    refresh.ts   — GET/POST /api/insights/refresh (daily cron; regenerates insights)
+  calendar/
+    feed.ts      — GET /api/calendar/<token> (read-only iCal feed)
     calendar/
       feed.ts    — GET /api/calendar/<token> (read-only iCal feed)
 supabase/

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../../app/AppContext';
 import { INTEGRATIONS } from '../../lib/data';
+import { INBOX_DOMAIN, INBOX_MAILBOX } from '../../lib/inboxAddress';
 import { Icon } from '../Icon';
 
 export function IntegrationsModal() {
@@ -14,10 +15,26 @@ export function IntegrationsModal() {
   const feedUrl = inboxToken
     ? `${window.location.origin}/api/calendar/${inboxToken}`
     : null;
+  // Show the actual address rather than the endpoint that receives it.
+  const forwardAddress = inboxToken
+    ? `${INBOX_MAILBOX}+${inboxToken}@${INBOX_DOMAIN}`
+    : null;
+
+  const [copyFailed, setCopyFailed] = useState(false);
 
   const copyFeed = async (url: string) => {
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setCopyFailed(false);
+      // Reset so a second copy still gives feedback.
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Denied permission or an insecure origin: say so rather than
+      // reporting a success that never happened.
+      setCopied(false);
+      setCopyFailed(true);
+    }
   };
 
   return (
@@ -53,7 +70,12 @@ export function IntegrationsModal() {
                       </span>
                     </div>
                     <div style={{ fontSize: 12.5, color: 'var(--ink-3)', marginTop: 2, lineHeight: 1.5 }}>{it.desc}</div>
-                    {it.meta && (
+                    {it.key === 'forward' && forwardAddress && (
+                      <div style={{ fontSize: 11.5, color: 'var(--ink-2)', marginTop: 4, fontFamily: 'var(--font-mono)' }}>
+                        {forwardAddress}
+                      </div>
+                    )}
+                    {it.meta && !(it.key === 'forward' && forwardAddress) && (
                       <div style={{ fontSize: 11.5, color: 'var(--ink-2)', marginTop: 4, fontFamily: 'var(--font-mono)' }}>
                         {it.meta}
                       </div>
@@ -76,7 +98,7 @@ export function IntegrationsModal() {
                     <div className="integ-feed-row">
                       <code>{feedUrl}</code>
                       <button className="btn" onClick={() => void copyFeed(feedUrl)}>
-                        {copied ? 'Copied' : 'Copy'}
+                        {copied ? 'Copied' : copyFailed ? 'Copy failed' : 'Copy'}
                       </button>
                     </div>
                   </div>

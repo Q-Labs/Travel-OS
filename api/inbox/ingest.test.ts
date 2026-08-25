@@ -138,7 +138,7 @@ const VALID_PARSED_JSON = JSON.stringify({
   suggested_confidence: 0.92,
 });
 
-import { createIngestHandler } from './ingest';
+import { createIngestHandler, defaultNow, normalizeReceivedAt } from './ingest';
 
 describe('ingest handler', () => {
   const SECRET = 'test-secret';
@@ -148,31 +148,31 @@ describe('ingest handler', () => {
   });
 
   it('returns 405 for non-POST methods', async () => {
-    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never });
+    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('GET', SECRET));
     expect(res.status).toBe(405);
   });
 
   it('returns 405 for PUT method', async () => {
-    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never });
+    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('PUT', SECRET, VALID_BODY));
     expect(res.status).toBe(405);
   });
 
   it('returns 401 when x-ingest-secret header is missing', async () => {
-    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never });
+    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', null, VALID_BODY));
     expect(res.status).toBe(401);
   });
 
   it('returns 401 when x-ingest-secret header is wrong', async () => {
-    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never });
+    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', 'wrong-secret', VALID_BODY));
     expect(res.status).toBe(401);
   });
 
   it('returns 400 when body is malformed JSON', async () => {
-    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never });
+    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const req = new Request('http://localhost/api/inbox/ingest', {
       method: 'POST',
       headers: { 'x-ingest-secret': SECRET, 'content-type': 'application/json' },
@@ -183,13 +183,13 @@ describe('ingest handler', () => {
   });
 
   it('returns 400 when body is missing required fields', async () => {
-    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never });
+    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', SECRET, { userId: 'u1' }));
     expect(res.status).toBe(400);
   });
 
   it('returns 400 when body is JSON null (isValidBody falsy branch)', async () => {
-    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never });
+    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const req = new Request('http://localhost/api/inbox/ingest', {
       method: 'POST',
       headers: { 'x-ingest-secret': SECRET, 'content-type': 'application/json' },
@@ -202,7 +202,7 @@ describe('ingest handler', () => {
   it('happy path: inserts placeholder, calls Claude, updates to parsed with suggested trip', async () => {
     const supabase = makeSupabaseMock([{ id: 'tr-oaxaca', destination: 'Oaxaca', country: 'Mexico', start_date: '2026-05-02', end_date: '2026-05-09', date_approx: null, stage: 'upcoming' }]);
     const anthropic = makeAnthropicMock(VALID_PARSED_JSON);
-    const handler = createIngestHandler({ anthropic: anthropic as never, supabase: supabase as never });
+    const handler = createIngestHandler({ anthropic: anthropic as never, supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', SECRET, VALID_BODY));
     expect(res.status).toBe(200);
     const body = await res.json() as { id: string };
@@ -236,7 +236,7 @@ describe('ingest handler', () => {
       };
     });
 
-    const handler = createIngestHandler({ anthropic: anthropic as never, supabase: supabase as never });
+    const handler = createIngestHandler({ anthropic: anthropic as never, supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', SECRET, VALID_BODY));
     expect(res.status).toBe(200);
     expect(capturedUpdatePayload).toMatchObject({ status: 'needs_review' });
@@ -259,7 +259,7 @@ describe('ingest handler', () => {
       };
     });
 
-    const handler = createIngestHandler({ anthropic: badJson as never, supabase: supabase as never });
+    const handler = createIngestHandler({ anthropic: badJson as never, supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', SECRET, VALID_BODY));
     expect(res.status).toBe(200);
     expect(capturedUpdatePayload).toMatchObject({ status: 'needs_review' });
@@ -284,7 +284,7 @@ describe('ingest handler', () => {
       };
     });
 
-    const handler = createIngestHandler({ anthropic: throwingAnthropic as never, supabase: supabase as never });
+    const handler = createIngestHandler({ anthropic: throwingAnthropic as never, supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', SECRET, VALID_BODY));
     expect(res.status).toBe(200);
     expect(capturedUpdatePayload).toMatchObject({ status: 'needs_review', note: 'API down' });
@@ -293,7 +293,7 @@ describe('ingest handler', () => {
   it('returns 500 when initial insert fails', async () => {
     const supabase = makeSupabaseMock([], new Error('DB insert failed'));
     const anthropic = makeAnthropicMock(VALID_PARSED_JSON);
-    const handler = createIngestHandler({ anthropic: anthropic as never, supabase: supabase as never });
+    const handler = createIngestHandler({ anthropic: anthropic as never, supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', SECRET, VALID_BODY));
     expect(res.status).toBe(500);
     expect(anthropic.messages.create).not.toHaveBeenCalled();
@@ -316,7 +316,7 @@ describe('ingest handler', () => {
       };
     });
     const bodyNoSource = { userId: 'user-1', raw: { subject: 'X', from: 'x@x.com', receivedAt: '2026-04-25', text: 'body' } };
-    const handler = createIngestHandler({ anthropic: anthropic as never, supabase: supabase as never });
+    const handler = createIngestHandler({ anthropic: anthropic as never, supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', SECRET, bodyNoSource));
     expect(res.status).toBe(200);
     expect(capturedInsertPayload).toMatchObject({ source: 'email' });
@@ -342,7 +342,7 @@ describe('ingest handler', () => {
         }),
       };
     });
-    const handler = createIngestHandler({ anthropic: makeAnthropicMock(nullConfidenceJson) as never, supabase: supabase as never });
+    const handler = createIngestHandler({ anthropic: makeAnthropicMock(nullConfidenceJson) as never, supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', SECRET, VALID_BODY));
     expect(res.status).toBe(200);
     expect(capturedUpdatePayload).toMatchObject({ status: 'needs_review', suggested_confidence: 0 });
@@ -360,7 +360,7 @@ describe('ingest handler', () => {
         update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) }),
       };
     });
-    const handler = createIngestHandler({ anthropic: anthropic as never, supabase: supabase as never });
+    const handler = createIngestHandler({ anthropic: anthropic as never, supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', SECRET, VALID_BODY));
     expect(res.status).toBe(200);
     const callArg = anthropic.messages.create.mock.calls[0][0] as { messages: Array<{ content: string }> };
@@ -389,7 +389,7 @@ describe('ingest handler', () => {
         }),
       };
     });
-    const handler = createIngestHandler({ anthropic: nonTextAnthropic as never, supabase: supabase as never });
+    const handler = createIngestHandler({ anthropic: nonTextAnthropic as never, supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', SECRET, VALID_BODY));
     expect(res.status).toBe(200);
     expect(capturedUpdatePayload).toMatchObject({ status: 'needs_review' });
@@ -407,7 +407,7 @@ describe('ingest handler', () => {
         update: vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: new Error('update failed') }) }),
       };
     });
-    const handler = createIngestHandler({ anthropic: anthropic as never, supabase: supabase as never });
+    const handler = createIngestHandler({ anthropic: anthropic as never, supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', SECRET, VALID_BODY));
     expect(res.status).toBe(500);
     const body = await res.json() as { error: string; id: string };
@@ -416,19 +416,19 @@ describe('ingest handler', () => {
   });
 
   it('rejects when raw.from is missing', async () => {
-    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never });
+    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', SECRET, { userId: 'u1', source: 'email', raw: { subject: 's', text: 't', receivedAt: '2026-04-25' } }));
     expect(res.status).toBe(400);
   });
 
   it('rejects when raw.receivedAt is missing', async () => {
-    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never });
+    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', SECRET, { userId: 'u1', source: 'email', raw: { subject: 's', text: 't', from: 'f@f.com' } }));
     expect(res.status).toBe(400);
   });
 
   it('rejects when userId is not a string', async () => {
-    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never });
+    const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never, supabase: makeSupabaseMock() as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', SECRET, { userId: 42, source: 'email', raw: { subject: 's', text: 't', from: 'f@f.com', receivedAt: '2026-04-25' } }));
     expect(res.status).toBe(400);
   });
@@ -452,7 +452,7 @@ describe('ingest handler', () => {
         }),
       };
     });
-    const handler = createIngestHandler({ anthropic: throwingAnthropic as never, supabase: supabase as never });
+    const handler = createIngestHandler({ anthropic: throwingAnthropic as never, supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
     const res = await handler(makeRequest('POST', SECRET, VALID_BODY));
     expect(res.status).toBe(200);
     expect(capturedUpdatePayload).toMatchObject({ status: 'needs_review', note: 'Parse error' });
@@ -461,25 +461,23 @@ describe('ingest handler', () => {
   describe('inbound email webhooks', () => {
     it('resolves the user from the recipient token and ingests the mail', async () => {
       const supabase = makeSupabaseMock([], null, null, { user_id: 'user-from-token' });
-      const handler = createIngestHandler({
-        anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never,
-        supabase: supabase as never,
-      });
+      const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never,
+        supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
       const res = await handler(makeProviderRequest('postmark', POSTMARK_PAYLOAD));
       expect(res.status).toBe(200);
       const inserted = supabase.insertSpy.mock.calls[0]?.[0] as Record<string, unknown>;
       expect(inserted['user_id']).toBe('user-from-token');
-      expect(inserted['source']).toBe('postmark');
+      // 'postmark' is not a BookingSource; storing it would make the UI label
+      // the item "Manual" and leave the Forwarded counter at zero.
+      expect(inserted['source']).toBe('email');
       expect(inserted['subject']).toBe('Reservation confirmed');
       expect(inserted['from_address']).toBe('automated@airbnb.com');
     });
 
     it('rejects an unknown provider without creating an item', async () => {
       const supabase = makeSupabaseMock([], null, null, { user_id: 'u1' });
-      const handler = createIngestHandler({
-        anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never,
-        supabase: supabase as never,
-      });
+      const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never,
+        supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
       const res = await handler(makeProviderRequest('mailgun', POSTMARK_PAYLOAD));
       expect(res.status).toBe(400);
       expect(supabase.insertSpy).not.toHaveBeenCalled();
@@ -487,10 +485,8 @@ describe('ingest handler', () => {
 
     it('rejects a payload missing required fields', async () => {
       const supabase = makeSupabaseMock([], null, null, { user_id: 'u1' });
-      const handler = createIngestHandler({
-        anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never,
-        supabase: supabase as never,
-      });
+      const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never,
+        supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
       const res = await handler(makeProviderRequest('postmark', { From: 'a@b.com' }));
       expect(res.status).toBe(400);
       expect(supabase.insertSpy).not.toHaveBeenCalled();
@@ -498,10 +494,8 @@ describe('ingest handler', () => {
 
     it('rejects a recipient with no plus-tag token', async () => {
       const supabase = makeSupabaseMock([], null, null, { user_id: 'u1' });
-      const handler = createIngestHandler({
-        anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never,
-        supabase: supabase as never,
-      });
+      const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never,
+        supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
       const res = await handler(
         makeProviderRequest('postmark', { ...POSTMARK_PAYLOAD, OriginalRecipient: 'quincy@travelos.app' }),
       );
@@ -511,13 +505,167 @@ describe('ingest handler', () => {
 
     it('rejects an unrecognised inbox token', async () => {
       const supabase = makeSupabaseMock([], null, null, null);
-      const handler = createIngestHandler({
-        anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never,
-        supabase: supabase as never,
-      });
+      const handler = createIngestHandler({ anthropic: makeAnthropicMock(VALID_PARSED_JSON) as never,
+        supabase: supabase as never, now: () => new Date('2026-08-24T12:00:00Z') });
       const res = await handler(makeProviderRequest('postmark', POSTMARK_PAYLOAD));
       expect(res.status).toBe(404);
       expect(supabase.insertSpy).not.toHaveBeenCalled();
     });
+  });
+});
+
+
+describe('review findings', () => {
+  const NOW = new Date('2026-08-24T12:00:00Z');
+
+  describe('normalizeReceivedAt', () => {
+    it('turns a provider date header into an ISO timestamp', () => {
+      expect(normalizeReceivedAt('Mon, 20 Apr 2026 12:00:00 +0000', NOW))
+        .toBe('2026-04-20T12:00:00.000Z');
+    });
+
+    it('falls back to the ingest time when the provider sends nothing', () => {
+      expect(normalizeReceivedAt('', NOW)).toBe(NOW.toISOString());
+    });
+
+    it('falls back when the value is unparseable', () => {
+      expect(normalizeReceivedAt('sometime last tuesday', NOW)).toBe(NOW.toISOString());
+    });
+  });
+
+  describe('provider authentication', () => {
+    function handlerWith() {
+      const supabase = makeSupabaseMock([], null, null, { user_id: 'user-from-token' });
+      return {
+        supabase,
+        handler: createIngestHandler({
+          anthropic: makeAnthropicMock(JSON.stringify({
+            vendor: 'Airbnb', type: 'lodging', title: 'Riad', dates: 'Oct',
+            cost: 1240, confirmation: 'X', suggested_trip: null, suggested_confidence: 0.9,
+          })) as never,
+          supabase: supabase as never,
+          now: () => NOW,
+        }),
+      };
+    }
+
+    it('accepts the secret as a query parameter, since Postmark cannot send headers', async () => {
+      const { handler } = handlerWith();
+      const req = new Request(
+        'http://localhost/api/inbox/ingest?provider=postmark&secret=test-secret',
+        { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(POSTMARK_PAYLOAD) },
+      );
+      expect((await handler(req)).status).toBe(200);
+    });
+
+    it('accepts the secret as HTTP basic auth', async () => {
+      const { handler } = handlerWith();
+      const basic = Buffer.from('travelos:test-secret').toString('base64');
+      const req = new Request('http://localhost/api/inbox/ingest?provider=postmark', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Basic ${basic}` },
+        body: JSON.stringify(POSTMARK_PAYLOAD),
+      });
+      expect((await handler(req)).status).toBe(200);
+    });
+
+    it('rejects a wrong query secret', async () => {
+      const { handler } = handlerWith();
+      const req = new Request('http://localhost/api/inbox/ingest?provider=postmark&secret=nope', {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(POSTMARK_PAYLOAD),
+      });
+      expect((await handler(req)).status).toBe(401);
+    });
+
+    it('rejects malformed basic auth', async () => {
+      const { handler } = handlerWith();
+      const req = new Request('http://localhost/api/inbox/ingest?provider=postmark', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: 'Basic !!!not base64!!!' },
+        body: JSON.stringify(POSTMARK_PAYLOAD),
+      });
+      expect((await handler(req)).status).toBe(401);
+    });
+  });
+
+  it('parses SendGrid multipart/form-data instead of choking on it', async () => {
+    const supabase = makeSupabaseMock([], null, null, { user_id: 'user-from-token' });
+    const handler = createIngestHandler({
+      anthropic: makeAnthropicMock(JSON.stringify({
+        vendor: 'Airbnb', type: 'lodging', title: 'Riad', dates: 'Oct',
+        cost: 1240, confirmation: 'X', suggested_trip: null, suggested_confidence: 0.9,
+      })) as never,
+      supabase: supabase as never,
+      now: () => NOW,
+    });
+    const form = new FormData();
+    form.set('from', 'automated@airbnb.com');
+    form.set('to', 'quincy+a1b2c3@travelos.app');
+    form.set('subject', 'Reservation confirmed');
+    form.set('text', 'Riad Dar Anika, 4 nights.');
+    const req = new Request('http://localhost/api/inbox/ingest?provider=sendgrid&secret=test-secret', {
+      method: 'POST',
+      body: form,
+    });
+    const res = await handler(req);
+    expect(res.status).toBe(200);
+    const inserted = supabase.insertSpy.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(inserted['user_id']).toBe('user-from-token');
+    expect(inserted['source']).toBe('email');
+  });
+
+  it('defaultNow returns the current date', () => {
+    expect(defaultNow()).toBeInstanceOf(Date);
+  });
+
+  it('rejects everything when no ingest secret is configured', async () => {
+    const previous = process.env['INGEST_SECRET'];
+    delete process.env['INGEST_SECRET'];
+    const handler = createIngestHandler({
+      anthropic: makeAnthropicMock('{}') as never,
+      supabase: makeSupabaseMock() as never,
+      now: () => NOW,
+    });
+    const req = new Request('http://localhost/api/inbox/ingest?provider=postmark&secret=anything', {
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(POSTMARK_PAYLOAD),
+    });
+    expect((await handler(req)).status).toBe(401);
+    process.env['INGEST_SECRET'] = previous as string;
+  });
+
+  it('parses urlencoded form posts as well as multipart', async () => {
+    const supabase = makeSupabaseMock([], null, null, { user_id: 'user-from-token' });
+    const handler = createIngestHandler({
+      anthropic: makeAnthropicMock(JSON.stringify({
+        vendor: 'Airbnb', type: 'lodging', title: 'Riad', dates: 'Oct',
+        cost: 1, confirmation: null, suggested_trip: null, suggested_confidence: 0.9,
+      })) as never,
+      supabase: supabase as never,
+      now: () => NOW,
+    });
+    const body = new URLSearchParams({
+      from: 'a@b.com', to: 'quincy+a1b2c3@travelos.app',
+      subject: 'Reservation confirmed', text: 'Riad Dar Anika',
+    });
+    const req = new Request('http://localhost/api/inbox/ingest?provider=sendgrid&secret=test-secret', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body,
+    });
+    expect((await handler(req)).status).toBe(200);
+  });
+
+  it('handles a request that carries no content-type at all', async () => {
+    const handler = createIngestHandler({
+      anthropic: makeAnthropicMock('{}') as never,
+      supabase: makeSupabaseMock() as never,
+      now: () => NOW,
+    });
+    const req = new Request('http://localhost/api/inbox/ingest', {
+      method: 'POST',
+      headers: { 'x-ingest-secret': 'test-secret' },
+    });
+    // No body and no content-type: falls through to the JSON path and is rejected.
+    expect((await handler(req)).status).toBe(400);
   });
 });

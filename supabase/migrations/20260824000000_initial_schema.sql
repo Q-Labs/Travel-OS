@@ -60,9 +60,15 @@ create table if not exists public.insights (
   trip_id    text not null,
   type       text not null check (type in ('stage_stale', 'price_drop', 'passport_expiry', 'packing_reminder', 'weather')),
   severity   text not null check (severity in ('info', 'warning', 'urgent')),
-  title      text not null,
-  body       text not null,
-  created_at timestamptz not null default now(),
+  title        text not null,
+  body         text not null,
+  -- Set for rows written by the daily cron, so reconciliation only ever prunes
+  -- what it generated and never a hand-authored or seeded insight.
+  generated    boolean not null default false,
+  -- Dismissals are recorded rather than deleted: a deleted row would simply be
+  -- regenerated under the same deterministic id on the next run.
+  dismissed_at timestamptz,
+  created_at   timestamptz not null default now(),
   primary key (id, user_id)
 );
 
@@ -102,6 +108,7 @@ declare
   t text;
 begin
   foreach t in array array['travelers', 'trips', 'trip_details', 'insights', 'inbox_items'] loop
+    execute format('drop policy if exists %I on public.%I', t || '_owner', t);
     execute format(
       'create policy %I on public.%I for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid())',
       t || '_owner', t
@@ -110,4 +117,16 @@ begin
 end $$;
 
 -- The inbox subscribes to Realtime so parsed emails appear without a refresh.
-alter publication supabase_realtime add table public.inbox_items;
+-- `alter publication … add table` errors if the table is already a member, so
+-- this file stays re-runnable.
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'inbox_items'
+  ) then
+    alter publication supabase_realtime add table public.inbox_items;
+  end if;
+end $$;

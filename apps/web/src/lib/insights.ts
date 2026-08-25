@@ -59,13 +59,20 @@ export function passportExpiryInsights(trip: Trip, detail: TripDetail, today: Da
   if (daysBetween(today, end) < 0) return [];
 
   const insights: Insight[] = [];
+  // Two documents can share a title ("Family passports"), and a duplicate id in
+  // one upsert makes Postgres reject the whole statement, so repeats are
+  // disambiguated with a counter rather than left to collide.
+  const seen = new Map<string, number>();
   for (const doc of detail.documents) {
     if (doc.type !== 'passport' || !doc.expiry) continue;
     const slack = daysBetween(end, doc.expiry);
     if (slack >= PASSPORT_BUFFER_DAYS) continue;
     const expired = slack < 0;
+    const slug = slugify(doc.title);
+    const nth = (seen.get(slug) ?? 0) + 1;
+    seen.set(slug, nth);
     insights.push({
-      id: `pass-${trip.id}-${slugify(doc.title)}`,
+      id: nth === 1 ? `pass-${trip.id}-${slug}` : `pass-${trip.id}-${slug}-${nth}`,
       trip_id: trip.id,
       type: 'passport_expiry',
       severity: expired ? 'urgent' : 'warning',
@@ -114,9 +121,60 @@ export function weatherInsight(trip: Trip, daily: DailyForecast[]): Insight | nu
 export function tripsNeedingForecast(trips: Trip[], today: Date): Trip[] {
   return trips.filter((trip) => {
     if (trip.stage === 'archived' || !trip.start_date) return false;
-    const daysOut = daysBetween(today, trip.start_date);
-    return daysOut >= 0 && daysOut <= FORECAST_HORIZON_DAYS;
+    // A trip already under way still wants a forecast for its remaining days,
+    // so selection keys off the end date; only the start has to be near enough
+    // for Open-Meteo to answer at all.
+    const endsIn = daysBetween(today, trip.end_date ?? trip.start_date);
+    if (endsIn < 0) return false;
+    return daysBetween(today, trip.start_date) <= FORECAST_HORIZON_DAYS;
   });
+}
+
+function isoDay(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function shiftDays(from: Date, days: number): Date {
+  const out = new Date(from);
+  out.setUTCDate(out.getUTCDate() + days);
+  return out;
+}
+
+/**
+ * The date window to actually ask Open-Meteo about: the part of the trip that
+ * is still ahead, clamped to the forecast horizon. Asking for `forecast_days`
+ * from today instead would summarise the days *before* departure.
+ */
+/**
+ * The trips worth forecasting, each paired with the window to ask about.
+ *
+ * Combining selection and windowing means callers can't end up holding a trip
+ * with no valid range, so there is no impossible branch to guard.
+ */
+export function forecastTargets(
+  trips: Trip[],
+  today: Date,
+): { trip: Trip; range: { startDate: string; endDate: string } }[] {
+  const targets: { trip: Trip; range: { startDate: string; endDate: string } }[] = [];
+  for (const trip of tripsNeedingForecast(trips, today)) {
+    const range = forecastRange(trip, today);
+    if (range) targets.push({ trip, range });
+  }
+  return targets;
+}
+
+export function forecastRange(
+  trip: Trip,
+  today: Date,
+): { startDate: string; endDate: string } | null {
+  if (!trip.start_date) return null;
+  const todayIso = isoDay(today);
+  const startDate = trip.start_date < todayIso ? todayIso : trip.start_date;
+  const horizon = isoDay(shiftDays(today, FORECAST_HORIZON_DAYS));
+  const wanted = trip.end_date ?? trip.start_date;
+  const endDate = wanted > horizon ? horizon : wanted;
+  if (endDate < startDate) return null;
+  return { startDate, endDate };
 }
 
 export function generateInsights({ trips, details, forecasts, today }: GenerateInsightsInput): Insight[] {

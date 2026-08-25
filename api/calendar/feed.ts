@@ -1,7 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { buildCalendar } from '../../src/lib/ical';
-import { rowToTrip, rowToTripDetail } from '../../src/lib/rows';
-import type { TripDetail } from '../../src/lib/types';
+import { buildCalendar } from '../../apps/web/src/lib/ical';
+import { rowToTrip, rowToTripDetail } from '../../apps/web/src/lib/rows';
+import type { TripDetail } from '../../apps/web/src/lib/types';
 
 /**
  * Read-only iCal feed, addressed by the same per-user token the forwarding
