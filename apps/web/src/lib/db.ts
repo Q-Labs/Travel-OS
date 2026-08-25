@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
-import type { Trip, TripDetail, TripSplit, Insight, InboxItem, Traveler } from './types';
+import { rowToInboxItem, rowToTrip, rowToTripDetail } from './rows';
+import type { Trip, TripDetail, Insight, InboxItem, Traveler } from './types';
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -47,26 +48,7 @@ export async function fetchTrips(userId: string): Promise<Trip[]> {
     .eq('user_id', userId)
     .order('created_at');
   if (error || !data) return [];
-  return data.map((row) => ({
-    id: row.id as string,
-    destination: row.destination as string,
-    region: row.region as string,
-    country: row.country as string,
-    stage: row.stage as Trip['stage'],
-    categories: row.categories as Trip['categories'],
-    start_date: row.start_date as string | null,
-    end_date: row.end_date as string | null,
-    date_approx: row.date_approx as string | null,
-    budget_total: row.budget_total as number,
-    budget_spent: row.budget_spent as number,
-    budget_currency: row.budget_currency as string,
-    travelers: row.travelers as string[],
-    cover: { hue: row.cover_hue as number, label: row.cover_label as string },
-    notes: row.notes as string,
-    nights: row.nights as number,
-    created_days_ago: row.created_days_ago as number | undefined,
-    daysInStage: row.days_in_stage as number | undefined,
-  }));
+  return data.map(rowToTrip);
 }
 
 export async function fetchTripDetails(userId: string): Promise<Record<string, TripDetail>> {
@@ -76,17 +58,7 @@ export async function fetchTripDetails(userId: string): Promise<Record<string, T
     .eq('user_id', userId);
   if (error || !data) return {};
   return Object.fromEntries(
-    data.map((row) => [
-      row.trip_id as string,
-      {
-        itinerary: row.itinerary as TripDetail['itinerary'],
-        bookings: row.bookings as TripDetail['bookings'],
-        budget_breakdown: row.budget_breakdown as TripDetail['budget_breakdown'],
-        packing: row.packing as TripDetail['packing'],
-        documents: row.documents as TripDetail['documents'],
-        splits: (row.splits as TripSplit[] | null) ?? undefined,
-      },
-    ]),
+    data.map((row) => [row.trip_id as string, rowToTripDetail(row)]),
   );
 }
 
@@ -94,25 +66,10 @@ export async function fetchInsights(userId: string): Promise<Insight[]> {
   const { data, error } = await supabase
     .from('insights')
     .select('*')
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .is('dismissed_at', null);
   if (error || !data) return [];
   return data as Insight[];
-}
-
-function rowToInboxItem(row: Record<string, unknown>): InboxItem {
-  return {
-    id: row.id as string,
-    source: row.source as InboxItem['source'],
-    vendor: row.vendor as string,
-    subject: row.subject as string,
-    from: row.from_address as string,
-    received_ago: row.received_ago as string,
-    status: row.status as InboxItem['status'],
-    parsed: row.parsed as InboxItem['parsed'],
-    suggested_trip: row.suggested_trip as string | undefined,
-    suggested_confidence: row.suggested_confidence as number | undefined,
-    note: row.note as string | undefined,
-  };
 }
 
 export async function fetchInboxItems(userId: string): Promise<InboxItem[]> {
@@ -122,6 +79,20 @@ export async function fetchInboxItems(userId: string): Promise<InboxItem[]> {
     .eq('user_id', userId);
   if (error || !data) return [];
   return data.map(rowToInboxItem);
+}
+
+/**
+ * The user's routing token — it addresses both the forwarding inbox and the
+ * read-only calendar feed, so the UI needs it to show either one.
+ */
+export async function fetchInboxToken(userId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('user_inbox_tokens')
+    .select('token')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return (data as { token: string }).token;
 }
 
 export async function fetchTravelers(userId: string): Promise<Traveler[]> {
@@ -169,10 +140,16 @@ export async function upsertTripDetail(
   if (error) console.warn('[db] upsertTripDetail:', error.message);
 }
 
+/**
+ * Records a dismissal instead of deleting the row. The nightly cron rewrites
+ * generated insights under deterministic ids, so a deleted one would simply
+ * reappear the next morning; a dismissed one is skipped by `fetchInsights`
+ * and left alone by the cron's upsert.
+ */
 export async function deleteInsight(userId: string, id: string): Promise<void> {
   const { error } = await supabase
     .from('insights')
-    .delete()
+    .update({ dismissed_at: new Date().toISOString() })
     .eq('id', id)
     .eq('user_id', userId);
   if (error) console.warn('[db] deleteInsight:', error.message);

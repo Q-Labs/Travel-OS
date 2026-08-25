@@ -16,6 +16,16 @@ import {
   tripsLoader
 } from './routes';
 
+// Keep these tests hermetic — the trip Overview tab renders DestinationBlurb,
+// which would otherwise reach out to Wikipedia during the test run.
+vi.mock('../lib/clients/wikipedia', () => ({
+  fetchDestinationSummary: vi.fn().mockResolvedValue(null),
+}));
+
+vi.mock('../lib/clients/frankfurter', () => ({
+  fetchRates: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock('../lib/db', () => ({
   getSession: vi.fn(),
   signOut: vi.fn().mockResolvedValue(undefined),

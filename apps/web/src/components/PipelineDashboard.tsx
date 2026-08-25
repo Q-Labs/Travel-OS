@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
+import { HOME_CURRENCY, fmtMoneyIn, sumInCurrency } from '../lib/currency';
 import { useNavigate } from 'react-router-dom';
 import { TODAY } from '../lib/data';
-import { CAT_MAP, STAGES, coverStyle, daysBetween, fmtDate, fmtDateRange, fmtMoney } from '../lib/utils';
+import { CAT_MAP, STAGES, coverStyle, daysBetween, fmtDate, fmtDateRange } from '../lib/utils';
 import type { Insight, Trip, TripCategory } from '../lib/types';
 import { useApp } from '../app/AppContext';
 import { Icon } from './Icon';
@@ -23,7 +24,10 @@ function MetricsStrip({ trips }: { trips: Trip[] }) {
     if (!t.start_date) return false;
     return new Date(t.start_date + 'T00:00:00').getFullYear() === year;
   });
-  const ytdSpend = ytdTrips.reduce((s, t) => s + (t.budget_spent || 0), 0);
+  // Only home-currency trips are summed; mixing ¥ and $ into one figure would
+  // be nonsense and there are no live rates here to convert with.
+  const ytd = sumInCurrency(ytdTrips, HOME_CURRENCY, (t) => t.budget_spent, (t) => t.budget_currency);
+  const ytdSpend = ytd.total;
   const annualBudget = 30000;
   const ytdPct = Math.min(100, (ytdSpend / annualBudget) * 100);
   const totalTrips = trips.filter((t) => t.stage !== 'archived').length;
@@ -48,7 +52,7 @@ function MetricsStrip({ trips }: { trips: Trip[] }) {
       </div>
       <div className="metric">
         <div className="label">{year} spend</div>
-        <div className="value">{fmtMoney(ytdSpend)}<span className="suffix">/ {fmtMoney(annualBudget)}</span></div>
+        <div className="value">{fmtMoneyIn(ytdSpend, HOME_CURRENCY)}<span className="suffix">/ {fmtMoneyIn(annualBudget, HOME_CURRENCY)}</span></div>
         <div className="hint" style={{ marginTop: 8 }}>
           <div style={{ height: 4, background: 'var(--bg-sunken)', borderRadius: 2, overflow: 'hidden' }}>
             <div style={{ width: ytdPct + '%', height: '100%', background: 'var(--accent)' }} />

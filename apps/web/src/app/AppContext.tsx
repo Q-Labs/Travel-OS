@@ -4,6 +4,7 @@ import {
   deleteInboxItem,
   deleteInsight,
   fetchInboxItems,
+  fetchInboxToken,
   fetchInsights,
   fetchTripDetails,
   fetchTrips,
@@ -42,6 +43,7 @@ type AppState = {
   showModal: boolean;
   showIntegrations: boolean;
   userId: string | null;
+  inboxToken: string | null;
 };
 
 type AppActions = {
@@ -82,6 +84,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [showModal, setShowModal] = useState(false);
   const [showIntegrations, setShowIntegrations] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [inboxToken, setInboxToken] = useState<string | null>(null);
 
   useEffect(() => { document.documentElement.setAttribute('data-theme', theme); }, [theme]);
   useEffect(() => {
@@ -104,6 +107,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       inboxSub = null;
       if (!session) {
         setUserId(null);
+        setInboxToken(null);
         setTrips([]);
         setTripDetails({});
         setInsights([]);
@@ -116,13 +120,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!seeded) {
         await seedFromFixtures(uid, { trips: TRIPS, tripDetails: TRIP_DETAILS, insights: INSIGHTS, inbox: INBOX, travelers: TRAVELERS });
       }
-      const [ts, ds, ins, inb] = await Promise.all([
+      const [ts, ds, ins, inb, tok] = await Promise.all([
         fetchTrips(uid), fetchTripDetails(uid), fetchInsights(uid), fetchInboxItems(uid),
+        fetchInboxToken(uid),
       ]);
       setTrips(ts);
       setTripDetails(ds);
       setInsights(ins);
       setInbox(inb);
+      setInboxToken(tok);
       inboxSub = subscribeInbox(uid, (change) => {
         if (change.eventType === 'DELETE') {
           setInbox((ii) => ii.filter((i) => i.id !== change.id));
@@ -226,6 +232,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         trips, tripDetails, insights, inbox, search, categoryFilter,
         theme, accent, density, showInsights, tweaksOpen, showModal, showIntegrations,
         userId,
+        inboxToken,
         searchedTrips,
         moveStage, updateTrip, addTrip, togglePacked, toggleBookingStatus,
         dismissInsight, dismissInboxItem, assignInboxItem,

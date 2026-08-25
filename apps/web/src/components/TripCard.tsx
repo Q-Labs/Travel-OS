@@ -1,5 +1,6 @@
 import { TODAY } from '../lib/data';
-import { CAT_MAP, coverStyle, daysBetween, fmtDateRange, fmtMoney } from '../lib/utils';
+import { CAT_MAP, coverStyle, daysBetween, fmtDateRange } from '../lib/utils';
+import { fmtMoneyIn } from '../lib/currency';
 import type { Trip } from '../lib/types';
 import { Avatars } from './Avatars';
 
@@ -62,7 +63,7 @@ export function TripCard({ trip, onClick, onDragStart, onDragEnd, isDragging }: 
         </div>
 
         {(trip.stage === 'booked' || trip.stage === 'upcoming') && trip.budget_total > 0 && (
-          <div className="tcard-progress" title={`${fmtMoney(trip.budget_spent)} of ${fmtMoney(trip.budget_total)}`}>
+          <div className="tcard-progress" title={`${fmtMoneyIn(trip.budget_spent, trip.budget_currency)} of ${fmtMoneyIn(trip.budget_total, trip.budget_currency)}`}>
             <div className="bar" style={{ width: budgetPct + '%' }} />
           </div>
         )}

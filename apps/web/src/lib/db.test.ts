@@ -27,6 +27,7 @@ import {
   fetchInsights,
   fetchInboxItems,
   fetchTravelers,
+  fetchInboxToken,
   upsertTrip,
   upsertTripDetail,
   deleteInsight,
@@ -39,15 +40,21 @@ import {
 function makeChain(result: { data: unknown; error: unknown; count?: number }) {
   const c = {
     select: vi.fn(),
+    maybeSingle: vi.fn(),
     eq: vi.fn(),
     order: vi.fn(),
     upsert: vi.fn(),
     insert: vi.fn(),
+    update: vi.fn(),
     delete: vi.fn(),
+    is: vi.fn(),
     then: (cb: (v: { data: unknown; error: unknown; count?: number }) => void) =>
       Promise.resolve(cb(result)),
   };
   c.select.mockReturnValue(c);
+  c.update.mockReturnValue(c);
+  c.is.mockReturnValue(c);
+  c.maybeSingle.mockResolvedValue(result);
   c.eq.mockReturnValue(c);
   c.order.mockReturnValue(c);
   c.upsert.mockReturnValue(c);
@@ -207,9 +214,11 @@ describe('fetchInsights', () => {
       id: 'i1', trip_id: 'tr-1', type: 'weather',
       severity: 'info', title: 'Rain likely', body: 'Pack a jacket',
     };
-    mockFrom.mockReturnValue(makeChain({ data: [row], error: null }));
+    const chain = makeChain({ data: [row], error: null });
+    mockFrom.mockReturnValue(chain);
     const insights = await fetchInsights('u1');
     expect(insights[0].id).toBe('i1');
+    expect(chain.is).toHaveBeenCalledWith('dismissed_at', null);
   });
 
   it('returns empty array on error', async () => {
@@ -315,11 +324,14 @@ describe('upsertTripDetail', () => {
 });
 
 describe('deleteInsight', () => {
-  it('calls delete with matching id and user_id', async () => {
+  it('records a dismissal instead of deleting, so the cron cannot resurrect it', async () => {
     const chain = makeChain({ data: null, error: null });
     mockFrom.mockReturnValue(chain);
     await deleteInsight('u1', 'i1');
-    expect(chain.delete).toHaveBeenCalled();
+    expect(chain.delete).not.toHaveBeenCalled();
+    expect(chain.update).toHaveBeenCalledWith(
+      expect.objectContaining({ dismissed_at: expect.any(String) }),
+    );
     expect(chain.eq).toHaveBeenCalledWith('id', 'i1');
     expect(chain.eq).toHaveBeenCalledWith('user_id', 'u1');
   });
@@ -509,5 +521,23 @@ describe('seedFromFixtures', () => {
       expect.arrayContaining([expect.objectContaining({ splits })]),
       expect.any(Object),
     );
+  });
+});
+
+describe('fetchInboxToken', () => {
+  it('returns the token for a user', async () => {
+    mockFrom.mockReturnValue(makeChain({ data: { token: 'a1b2c3' }, error: null }));
+    expect(await fetchInboxToken('u1')).toBe('a1b2c3');
+    expect(mockFrom).toHaveBeenCalledWith('user_inbox_tokens');
+  });
+
+  it('returns null when the user has no token yet', async () => {
+    mockFrom.mockReturnValue(makeChain({ data: null, error: null }));
+    expect(await fetchInboxToken('u1')).toBeNull();
+  });
+
+  it('returns null when the query errors', async () => {
+    mockFrom.mockReturnValue(makeChain({ data: null, error: { message: 'boom' } }));
+    expect(await fetchInboxToken('u1')).toBeNull();
   });
 });

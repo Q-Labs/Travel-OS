@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useApp } from '../../app/AppContext';
 import { TRAVELERS } from '../../lib/data';
 import type { Trip, TripCategory } from '../../lib/types';
 import { CATEGORIES } from '../../lib/utils';
+import { geocode } from '../../lib/clients/openMeteo';
+import { HOME_CURRENCY } from '../../lib/currency';
 import { Icon } from '../Icon';
 
 type FormData = {
@@ -15,9 +17,12 @@ type FormData = {
   categories: TripCategory[];
   travelers: string[];
   budget_total: string;
+  budget_currency: string;
 };
 
 const STEP_LABELS = ['the idea', 'who and what', 'first details'];
+/** A short list of common travel currencies; all are quoted by the ECB via Frankfurter. */
+const CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'MXN', 'SEK', 'NOK'];
 const COVER_HUES = [20, 180, 350, 260, 60, 110, 300];
 
 export function AddTripModal() {
@@ -33,9 +38,39 @@ export function AddTripModal() {
     categories: [],
     travelers: ['t1'],
     budget_total: '',
+    budget_currency: HOME_CURRENCY,
   });
 
+  const [lookingUp, setLookingUp] = useState(false);
+  // What a previous lookup put into region/country. Anything the user typed is
+  // never recorded here, so their input always wins over a later lookup.
+  const autofilled = useRef({ region: '', country: '' });
+
   const close = () => setShowModal(false);
+
+  /**
+   * Fills in region and country from the destination via Open-Meteo's geocoder.
+   * Anything the user typed themselves wins; values a previous lookup supplied
+   * are replaced, so they can't linger after the destination changes.
+   */
+  const autofillFromDestination = async () => {
+    const name = data.destination.trim();
+    if (!name) return;
+    setLookingUp(true);
+    const place = await geocode(name, (url, init) => fetch(url, init));
+    setLookingUp(false);
+    if (!place) return;
+    // A field is replaced when it is blank, or when it still holds what an
+    // earlier lookup put there -- otherwise changing the destination from
+    // Lisbon to Kyoto would save the trip with country "Portugal".
+    const keep = (current: string, previous: string) => current !== '' && current !== previous;
+    setData((d) => ({
+      ...d,
+      region: keep(d.region, autofilled.current.region) ? d.region : place.region,
+      country: keep(d.country, autofilled.current.country) ? d.country : place.country,
+    }));
+    autofilled.current = { region: place.region, country: place.country };
+  };
 
   const toggleCat = (k: TripCategory) =>
     setData((d) => ({
@@ -73,7 +108,7 @@ export function AddTripModal() {
       date_approx: data.date_approx || null,
       budget_total: Number(data.budget_total) || 0,
       budget_spent: 0,
-      budget_currency: 'USD',
+      budget_currency: data.budget_currency,
       travelers: data.travelers,
       cover: { hue, label: 'new·' + data.country.toLowerCase().slice(0, 4) },
       notes: '',
@@ -108,12 +143,15 @@ export function AddTripModal() {
                   autoFocus
                   value={data.destination}
                   onChange={(e) => setData((d) => ({ ...d, destination: e.target.value }))}
+                  onBlur={() => void autofillFromDestination()}
                   placeholder="Kyoto, Patagonia, Lisbon…"
                 />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                 <div className="field">
-                  <label htmlFor="atm-region">Region / venue</label>
+                  <label htmlFor="atm-region">
+                    Region / venue{lookingUp && <em className="atm-hint"> · looking up…</em>}
+                  </label>
                   <input
                     id="atm-region"
                     value={data.region}
@@ -179,15 +217,29 @@ export function AddTripModal() {
 
           {step === 2 && (
             <>
-              <div className="field">
-                <label htmlFor="atm-budget">Rough budget</label>
-                <input
-                  id="atm-budget"
-                  type="number"
-                  value={data.budget_total}
-                  onChange={(e) => setData((d) => ({ ...d, budget_total: e.target.value }))}
-                  placeholder="8000"
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14 }}>
+                <div className="field">
+                  <label htmlFor="atm-budget">Rough budget</label>
+                  <input
+                    id="atm-budget"
+                    type="number"
+                    value={data.budget_total}
+                    onChange={(e) => setData((d) => ({ ...d, budget_total: e.target.value }))}
+                    placeholder="8000"
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="atm-currency">Currency</label>
+                  <select
+                    id="atm-currency"
+                    value={data.budget_currency}
+                    onChange={(e) => setData((d) => ({ ...d, budget_currency: e.target.value }))}
+                  >
+                    {CURRENCIES.map((code) => (
+                      <option key={code} value={code}>{code}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div style={{ background: 'var(--bg-sunken)', padding: 16, borderRadius: 10, fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.6 }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, marginBottom: 4 }}>
