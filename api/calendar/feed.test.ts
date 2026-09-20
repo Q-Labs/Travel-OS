@@ -71,7 +71,8 @@ describe('createCalendarHandler', () => {
     const body = await res.text();
     expect(body).toContain('BEGIN:VCALENDAR');
     expect(body).toContain('UID:trip-tr-lisbon@travel-os');
-    expect(body).toContain('UID:booking-tr-lisbon-0@travel-os');
+    // UIDs are derived from the booking, not its array index.
+    expect(body).toMatch(/UID:booking-tr-lisbon-[a-z0-9]+@travel-os/);
   });
 
   it('offers the feed as a named file', async () => {

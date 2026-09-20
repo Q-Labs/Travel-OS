@@ -86,10 +86,12 @@ describe('buildCalendar', () => {
       }),
     };
     const l = lines(buildCalendar([makeTrip()], details, { now: NOW }));
-    expect(l).toContain('UID:booking-tr-lisbon-0@travel-os');
+    // The UID is derived from the booking, not its position in the array.
+    const uids = l.filter((x) => x.startsWith('UID:booking-'));
+    expect(uids).toHaveLength(1);
+    expect(uids[0]).toMatch(/^UID:booking-tr-lisbon-[a-z0-9]+@travel-os$/);
     expect(l).toContain('DTSTART;VALUE=DATE:20260912');
     expect(l.some((x) => x.startsWith('SUMMARY:TAP 204'))).toBe(true);
-    expect(l.some((x) => x.includes('booking-tr-lisbon-1'))).toBe(false);
   });
 
   it('keeps booking UIDs stable across rebuilds', () => {
@@ -160,5 +162,43 @@ describe('buildCalendar', () => {
   it('handles a trip whose detail row is missing', () => {
     const ics = buildCalendar([makeTrip()], {}, { now: NOW });
     expect(ics).toContain('UID:trip-tr-lisbon@travel-os');
+  });
+});
+
+describe('codex review findings', () => {
+  it('still emits dated bookings when the trip itself has no date range', () => {
+    const trip = makeTrip({ start_date: null, end_date: null });
+    const ics = buildCalendar([trip], {
+      [trip.id]: makeDetail({
+        bookings: [
+          { category: 'flight', title: 'TAP EWR-LIS', status: 'done', cost: 1240, travel_date: '2026-09-12' },
+        ],
+      }),
+    }, { now: NOW });
+    // The trip span cannot be placed, but the flight has its own date.
+    expect(ics).not.toContain('UID:trip-');
+    expect(ics).toContain('SUMMARY:TAP EWR-LIS');
+  });
+
+  it('keeps a booking UID stable when earlier bookings are removed', () => {
+    const bookings = [
+      { category: 'lodging' as const, title: 'Riad', status: 'done' as const, cost: 1, travel_date: '2026-09-13', confirmation: 'AAA111' },
+      { category: 'flight' as const, title: 'TAP', status: 'done' as const, cost: 2, travel_date: '2026-09-12', confirmation: 'BBB222' },
+    ];
+    const uidOf = (list: typeof bookings) => {
+      const ics = buildCalendar([makeTrip()], { 'tr-lisbon': makeDetail({ bookings: list }) }, { now: NOW });
+      return ics.split('\r\n').filter((l) => l.startsWith('UID:booking-'));
+    };
+    const before = uidOf(bookings);
+    const after = uidOf([bookings[1]!]);
+    // Dropping the first booking must not renumber the second.
+    expect(after[0]).toBe(before[1]);
+  });
+
+  it('disambiguates bookings that are otherwise identical', () => {
+    const one = { category: 'dining' as const, title: 'Dinner', status: 'done' as const, cost: 50, travel_date: '2026-09-14' };
+    const ics = buildCalendar([makeTrip()], { 'tr-lisbon': makeDetail({ bookings: [one, { ...one }] }) }, { now: NOW });
+    const uids = ics.split('\r\n').filter((l) => l.startsWith('UID:booking-'));
+    expect(new Set(uids).size).toBe(2);
   });
 });

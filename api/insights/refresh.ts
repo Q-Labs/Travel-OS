@@ -85,10 +85,16 @@ export function createInsightsHandler({
       }
       const trips = (tripRows as Record<string, unknown>[]).map(rowToTrip);
 
-      const { data: detailRows } = await supabase
+      // The error matters: treating a failed query as "no details" would drop
+      // every packing and passport insight, and the prune below would then
+      // delete the previously valid rows while reporting success.
+      const { data: detailRows, error: detailsError } = await supabase
         .from('trip_details')
         .select('*')
         .eq('user_id', userId);
+      if (detailsError) {
+        throw new Error('Failed to load trip details');
+      }
       const details: Record<string, TripDetail> = {};
       for (const row of (detailRows ?? []) as Record<string, unknown>[]) {
         details[row['trip_id'] as string] = rowToTripDetail(row);

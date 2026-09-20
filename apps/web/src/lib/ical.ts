@@ -1,4 +1,4 @@
-import type { Trip, TripDetail } from './types';
+import type { Booking, Trip, TripDetail } from './types';
 
 /**
  * A minimal RFC 5545 writer.
@@ -86,6 +86,35 @@ function event(
   return out;
 }
 
+/**
+ * A UID that survives reordering.
+ *
+ * Bookings carry no persisted id, and the array index changes whenever one is
+ * inserted or removed -- which makes every later booking look like a brand new
+ * event to a subscribed calendar, leaving the old ones behind as duplicates.
+ * The confirmation code is the closest thing to a stable identifier; failing
+ * that, a digest of the fields that identify the booking.
+ */
+function bookingUid(tripId: string, booking: Booking): string {
+  const confirmation = booking.confirmation?.trim();
+  if (confirmation) return `booking-${tripId}-${slug(confirmation)}`;
+  const digest = hash([booking.category, booking.title, booking.travel_date, booking.vendor, booking.cost].join('|'));
+  return `booking-${tripId}-${digest}`;
+}
+
+function slug(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+/** djb2 — small, dependency-free, and stable across runs. */
+function hash(value: string): string {
+  let h = 5381;
+  for (let i = 0; i < value.length; i += 1) {
+    h = ((h << 5) + h + value.charCodeAt(i)) >>> 0;
+  }
+  return h.toString(36);
+}
+
 export function buildCalendar(
   trips: Trip[],
   details: Record<string, TripDetail>,
@@ -103,31 +132,40 @@ export function buildCalendar(
 
   for (const trip of trips) {
     if (trip.stage === 'archived') continue;
-    if (!trip.start_date || !trip.end_date) continue;
 
-    lines.push(...event(
-      `trip-${trip.id}`,
-      stamp,
-      toICalDate(trip.start_date),
-      nextDay(trip.end_date),
-      trip.destination,
-      trip.notes,
-    ));
+    // The trip-span event needs both ends; a trip still being planned may have
+    // neither while already carrying dated bookings, which must still appear.
+    if (trip.start_date && trip.end_date) {
+      lines.push(...event(
+        `trip-${trip.id}`,
+        stamp,
+        toICalDate(trip.start_date),
+        nextDay(trip.end_date),
+        trip.destination,
+        trip.notes,
+      ));
+    }
 
     const detail = details[trip.id];
     if (!detail) continue;
-    detail.bookings.forEach((booking, index) => {
-      if (!booking.travel_date) return;
+    const seen = new Map<string, number>();
+    for (const booking of detail.bookings) {
+      if (!booking.travel_date) continue;
       const parts = [booking.vendor, booking.confirmation].filter(Boolean);
+      const base = bookingUid(trip.id, booking);
+      // Identical bookings would otherwise share a UID; calendar clients treat
+      // that as one event and drop the rest.
+      const nth = (seen.get(base) ?? 0) + 1;
+      seen.set(base, nth);
       lines.push(...event(
-        `booking-${trip.id}-${index}`,
+        nth === 1 ? base : `${base}-${nth}`,
         stamp,
         toICalDate(booking.travel_date),
         nextDay(booking.travel_date),
         booking.title,
         parts.join(' · '),
       ));
-    });
+    }
   }
 
   lines.push('END:VCALENDAR');

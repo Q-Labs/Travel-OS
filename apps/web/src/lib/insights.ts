@@ -37,9 +37,14 @@ function slugify(value: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-export function staleStageInsight(trip: Trip): Insight | null {
+export function staleStageInsight(trip: Trip, today: Date): Insight | null {
   if (!STALE_STAGES.includes(trip.stage)) return null;
-  const age = trip.daysInStage ?? trip.created_days_ago;
+  // `daysInStage` and `created_days_ago` only exist on the seeded fixtures;
+  // nothing writes them back, so a trip loaded from the database relies on the
+  // persisted stage timestamp instead.
+  const age = trip.daysInStage
+    ?? trip.created_days_ago
+    ?? (trip.stage_changed_at ? daysBetween(trip.stage_changed_at.slice(0, 10), today) : undefined);
   if (age === undefined || age < STALE_STAGE_DAYS) return null;
   const months = Math.floor(age / 30);
   return {
@@ -181,7 +186,7 @@ export function generateInsights({ trips, details, forecasts, today }: GenerateI
   const insights: Insight[] = [];
   for (const trip of trips) {
     if (trip.stage === 'archived') continue;
-    const stale = staleStageInsight(trip);
+    const stale = staleStageInsight(trip, today);
     if (stale) insights.push(stale);
 
     const detail = details[trip.id];

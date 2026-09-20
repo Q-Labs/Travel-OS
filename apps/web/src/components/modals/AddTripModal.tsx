@@ -45,6 +45,9 @@ export function AddTripModal() {
   // What a previous lookup put into region/country. Anything the user typed is
   // never recorded here, so their input always wins over a later lookup.
   const autofilled = useRef({ region: '', country: '' });
+  // The destination the most recent lookup was started for. Two quick blurs can
+  // resolve out of order, and the older reply must not overwrite the newer one.
+  const latestLookup = useRef('');
 
   const close = () => setShowModal(false);
 
@@ -56,8 +59,10 @@ export function AddTripModal() {
   const autofillFromDestination = async () => {
     const name = data.destination.trim();
     if (!name) return;
+    latestLookup.current = name;
     setLookingUp(true);
     const place = await geocode(name, (url, init) => fetch(url, init));
+    if (latestLookup.current !== name) return;
     setLookingUp(false);
     if (!place) return;
     // A field is replaced when it is blank, or when it still holds what an

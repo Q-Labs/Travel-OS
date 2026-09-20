@@ -158,7 +158,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const moveStage = (tripId: string, stage: TripStage) =>
     setTrips((ts) => {
-      const next = ts.map((t) => (t.id === tripId ? { ...t, stage } : t));
+      // Stamped here so stale-stage insights have a persisted age to work from;
+      // the fixture counters are never written back.
+      const stamped = new Date().toISOString();
+      const next = ts.map((t) =>
+        t.id === tripId ? { ...t, stage, stage_changed_at: stamped } : t,
+      );
       const updated = next.find((t) => t.id === tripId);
       if (userId && updated) void upsertTrip(userId, updated);
       return next;

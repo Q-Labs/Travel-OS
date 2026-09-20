@@ -35,6 +35,9 @@ export type Trip = {
   cover: { hue: number; label: string };
   notes: string;
   nights: number;
+  /** When the trip last changed stage. Persisted, unlike the two fixture-only
+   *  counters below, which exist so the seeded data reads realistically. */
+  stage_changed_at?: string;
   created_days_ago?: number;
   daysInStage?: number;
 };

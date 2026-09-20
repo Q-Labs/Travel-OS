@@ -25,6 +25,7 @@ export function rowToTrip(row: Record<string, unknown>): Trip {
     cover: { hue: row['cover_hue'] as number, label: row['cover_label'] as string },
     notes: row['notes'] as string,
     nights: row['nights'] as number,
+    stage_changed_at: row['stage_changed_at'] as string | undefined,
     created_days_ago: row['created_days_ago'] as number | undefined,
     daysInStage: row['days_in_stage'] as number | undefined,
   };

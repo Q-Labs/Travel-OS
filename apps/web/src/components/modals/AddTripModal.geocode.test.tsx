@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const geocode = vi.fn();
 const addTrip = vi.fn();
@@ -73,5 +73,29 @@ describe('AddTripModal destination autofill', () => {
     expect(await screen.findByText(/looking up/)).toBeInTheDocument();
     resolve(PLACE);
     await waitFor(() => expect(screen.queryByText(/looking up/)).not.toBeInTheDocument());
+  });
+
+  it('applies the newest lookup even when an earlier one resolves first', async () => {
+    const KYOTO = { lat: 35, lon: 135, country: 'Japan', region: 'Kansai', timezone: 'Asia/Tokyo' };
+    let releaseKyoto: (v: typeof KYOTO) => void = () => {};
+    // The first request answers immediately; the newer one lands afterwards.
+    geocode
+      .mockResolvedValueOnce(PLACE)
+      .mockImplementationOnce(() => new Promise((resolve) => { releaseKyoto = resolve; }));
+
+    render(<AddTripModal />);
+    typeDestination('Lisbon');
+    typeDestination('Kyoto');
+    await waitFor(() => expect(geocode).toHaveBeenCalledTimes(2));
+
+    await act(async () => {
+      releaseKyoto(KYOTO);
+      await Promise.resolve();
+    });
+
+    // Without tying each response back to the destination it was requested for,
+    // the stale Lisbon answer wins and the trip saves as Portugal.
+    expect(screen.getByLabelText('Country')).toHaveValue('Japan');
+    expect(screen.getByLabelText(/Region/)).toHaveValue('Kansai');
   });
 });

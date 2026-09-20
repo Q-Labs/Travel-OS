@@ -62,7 +62,7 @@ function forecast(days: Partial<DailyForecast>[]): DailyForecast[] {
 describe('staleStageInsight', () => {
   it('flags a dreaming trip that has sat past the threshold', () => {
     const trip = makeTrip({ stage: 'dreaming', daysInStage: STALE_STAGE_DAYS + 10 });
-    const insight = staleStageInsight(trip);
+    const insight = staleStageInsight(trip, TODAY);
     expect(insight).not.toBeNull();
     expect(insight?.type).toBe('stage_stale');
     expect(insight?.id).toBe('stale-tr-test');
@@ -73,26 +73,26 @@ describe('staleStageInsight', () => {
 
   it('flags a planning trip too', () => {
     const trip = makeTrip({ stage: 'planning', daysInStage: STALE_STAGE_DAYS });
-    expect(staleStageInsight(trip)?.type).toBe('stage_stale');
+    expect(staleStageInsight(trip, TODAY)?.type).toBe('stage_stale');
   });
 
   it('ignores trips that have not been sitting long enough', () => {
     const trip = makeTrip({ stage: 'dreaming', daysInStage: STALE_STAGE_DAYS - 1 });
-    expect(staleStageInsight(trip)).toBeNull();
+    expect(staleStageInsight(trip, TODAY)).toBeNull();
   });
 
   it('ignores stages past planning', () => {
     const trip = makeTrip({ stage: 'booked', daysInStage: STALE_STAGE_DAYS + 99 });
-    expect(staleStageInsight(trip)).toBeNull();
+    expect(staleStageInsight(trip, TODAY)).toBeNull();
   });
 
   it('falls back to created_days_ago when days_in_stage is absent', () => {
     const trip = makeTrip({ stage: 'dreaming', created_days_ago: STALE_STAGE_DAYS + 5 });
-    expect(staleStageInsight(trip)).not.toBeNull();
+    expect(staleStageInsight(trip, TODAY)).not.toBeNull();
   });
 
   it('returns null when the trip carries no age information at all', () => {
-    expect(staleStageInsight(makeTrip({ stage: 'dreaming' }))).toBeNull();
+    expect(staleStageInsight(makeTrip({ stage: 'dreaming' }), TODAY)).toBeNull();
   });
 });
 
@@ -358,5 +358,30 @@ describe('review findings', () => {
   it('has no window once the whole trip is beyond the horizon', () => {
     const trip = makeTrip({ start_date: '2026-09-01', end_date: '2026-09-10' });
     expect(forecastRange(trip, TODAY)).toBeNull();
+  });
+
+  it('derives stale-stage age from the persisted stage timestamp', () => {
+    // A trip loaded from Supabase has neither fixture field; only the column.
+    const trip = makeTrip({
+      stage: 'dreaming',
+      stage_changed_at: '2025-10-01T00:00:00Z',
+    });
+    const insight = staleStageInsight(trip, TODAY);
+    expect(insight).not.toBeNull();
+    expect(insight?.id).toBe('stale-tr-test');
+  });
+
+  it('does not fire when the persisted timestamp is recent', () => {
+    const trip = makeTrip({ stage: 'dreaming', stage_changed_at: '2026-04-10T00:00:00Z' });
+    expect(staleStageInsight(trip, TODAY)).toBeNull();
+  });
+
+  it('prefers the fixture age when one is present', () => {
+    const trip = makeTrip({
+      stage: 'dreaming',
+      daysInStage: 400,
+      stage_changed_at: '2026-04-19T00:00:00Z',
+    });
+    expect(staleStageInsight(trip, TODAY)).not.toBeNull();
   });
 });

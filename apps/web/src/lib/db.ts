@@ -117,6 +117,7 @@ export async function upsertTrip(userId: string, trip: Trip): Promise<void> {
       budget_currency: trip.budget_currency, travelers: trip.travelers,
       cover_hue: trip.cover.hue, cover_label: trip.cover.label,
       notes: trip.notes, nights: trip.nights,
+      ...(trip.stage_changed_at ? { stage_changed_at: trip.stage_changed_at } : {}),
     },
     { onConflict: 'id,user_id' },
   );

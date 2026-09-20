@@ -207,6 +207,17 @@ describe('createInsightsHandler', () => {
     expect(upsert).not.toHaveBeenCalled();
   });
 
+  it('aborts the user rather than pruning when trip details fail to load', async () => {
+    const { client, del } = makeSupabase({
+      trip_details: { data: null, error: { message: 'boom' } },
+    });
+    const handler = createInsightsHandler({ supabase: client, fetchFn: okForecast(), now });
+    const res = await handler(post(undefined, { userId: 'u1' }));
+    expect(res.status).toBe(500);
+    // Crucially: nothing was deleted on the strength of an incomplete picture.
+    expect(del).not.toHaveBeenCalled();
+  });
+
   it('tolerates a missing trip_details result', async () => {
     const { client } = makeSupabase({ trip_details: { data: null, error: null } });
     const handler = createInsightsHandler({ supabase: client, fetchFn: okForecast(), now });

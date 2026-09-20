@@ -262,6 +262,14 @@ describe('fetchTravelers', () => {
 
 // ── Mutations ─────────────────────────────────────────────────────────────────
 
+const tripFixture = {
+  id: 'tr-1', destination: 'Rome', region: '', country: 'Italy',
+  stage: 'dreaming' as const, categories: [] as import('./types').TripCategory[],
+  start_date: null, end_date: null, date_approx: null,
+  budget_total: 0, budget_spent: 0, budget_currency: 'USD', travelers: [],
+  cover: { hue: 42, label: 'terracotta' }, notes: '', nights: 0,
+};
+
 describe('upsertTrip', () => {
   it('flattens cover into cover_hue and cover_label', async () => {
     const chain = makeChain({ data: null, error: null });
@@ -278,6 +286,23 @@ describe('upsertTrip', () => {
       expect.objectContaining({ cover_hue: 42, cover_label: 'terracotta' }),
       expect.any(Object),
     );
+  });
+
+  it('persists the stage timestamp when the trip carries one', async () => {
+    const chain = makeChain({ data: null, error: null });
+    mockFrom.mockReturnValue(chain);
+    await upsertTrip('u1', { ...tripFixture, stage_changed_at: '2026-04-01T00:00:00Z' });
+    expect(chain.upsert.mock.calls[0]?.[0]).toMatchObject({
+      stage_changed_at: '2026-04-01T00:00:00Z',
+    });
+  });
+
+  it('omits the stage timestamp entirely when the trip has none', async () => {
+    const chain = makeChain({ data: null, error: null });
+    mockFrom.mockReturnValue(chain);
+    await upsertTrip('u1', tripFixture);
+    // Absent rather than null, so the column default applies on insert.
+    expect(chain.upsert.mock.calls[0]?.[0]).not.toHaveProperty('stage_changed_at');
   });
 
   it('swallows errors silently', async () => {
