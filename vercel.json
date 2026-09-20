@@ -1,3 +1,18 @@
 {
-  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/api/calendar/:token",
+      "destination": "/api/calendar/feed?token=:token"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/insights/refresh",
+      "schedule": "0 6 * * *"
+    }
+  ]
 }

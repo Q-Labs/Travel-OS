@@ -10,7 +10,12 @@ apps/web/
                    TripCard, TweaksPanel, modals/ (AddTripModal, IntegrationsModal), …
     lib/         — types.ts, data.ts (fixtures), db.ts (Supabase CRUD + Realtime),
                    trips.ts (pure trip selectors), supabase.ts (client), utils.ts
-  api/inbox/ingest.ts — POST /api/inbox/ingest, Vercel function; Claude Haiku email parsing
+api/             — Vercel serverless functions. These must live at the repo root:
+                   that is where Vercel discovers them, so they cannot move
+                   under apps/web/ even though they import from it.
+  inbox/ingest.ts    — POST /api/inbox/ingest; Claude Haiku email parsing
+  insights/refresh.ts — daily cron; regenerates insights
+  calendar/feed.ts   — read-only iCal feed
 ```
 
 All state lives in `AppContext`; mutations flow `useApp()` action → `lib/db.ts` → Supabase.

@@ -388,12 +388,12 @@ export const INBOX: InboxItem[] = [
 ];
 
 export const INTEGRATIONS: Integration[] = [
-  { key: 'forward', name: 'Forwarding inbox', desc: 'Forward any confirmation to a dedicated address. Parsed in seconds.', status: 'active', meta: 'quincy+trips@travelos.app', count: '42 this year' },
-  { key: 'gmail', name: 'Gmail', desc: 'Read-only scan of confirmation senders. Nothing else touched.', status: 'active', meta: 'quincy@gmail.com', count: '18 this month' },
-  { key: 'airlines', name: 'Flight tracking', desc: 'Price-drop alerts and itinerary sync via Duffel.', status: 'active', meta: '3 PNRs watched', count: '2 alerts this month' },
-  { key: 'extension', name: 'Browser extension', desc: 'Save listings from Airbnb, Vrbo, Booking.com while researching.', status: 'active', meta: 'Chrome + Safari', count: '7 saved drafts' },
-  { key: 'airbnb', name: 'Airbnb', desc: 'No public API — use forwarding inbox or extension.', status: 'email-only', meta: null, count: null },
-  { key: 'viator', name: 'Viator / GetYourGuide', desc: 'Affiliate search + deep links. Bookings come via email.', status: 'available', meta: null, count: null },
-  { key: 'opentable', name: 'OpenTable', desc: 'Forwarding inbox handles reservation confirmations.', status: 'email-only', meta: null, count: null },
-  { key: 'calendar', name: 'Calendar export', desc: 'Push confirmed bookings as iCal events.', status: 'available', meta: null, count: null },
+  { key: 'forward', name: 'Forwarding inbox', desc: 'Forward any confirmation to a dedicated address. Point Postmark, SendGrid or Cloudflare Email Routing at /api/inbox/ingest.', status: 'available', meta: 'POST /api/inbox/ingest' },
+  { key: 'calendar', name: 'Calendar export', desc: 'Subscribe to your trips and confirmed bookings as an iCal feed.', status: 'available', meta: '/api/calendar/<token>' },
+  { key: 'gmail', name: 'Gmail', desc: 'Read-only scan of confirmation senders. Needs an OAuth flow — not built yet.', status: 'available', meta: null },
+  { key: 'airlines', name: 'Flight tracking', desc: 'Price-drop alerts and itinerary sync. Duffel is self-serve and pay-as-you-go — not wired up yet.', status: 'available', meta: null },
+  { key: 'extension', name: 'Browser extension', desc: 'Save listings from Airbnb, Vrbo, Booking.com while researching. Not built yet.', status: 'available', meta: null },
+  { key: 'airbnb', name: 'Airbnb', desc: 'No public API — use the forwarding inbox.', status: 'email-only', meta: null },
+  { key: 'viator', name: 'Viator / GetYourGuide', desc: 'Affiliate search + deep links. Bookings come via email.', status: 'available', meta: null },
+  { key: 'opentable', name: 'OpenTable', desc: 'Forwarding inbox handles reservation confirmations.', status: 'email-only', meta: null },
 ];
