@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { INBOX_DOMAIN, INBOX_MAILBOX } from '../lib/inboxAddress';
 import { useApp } from '../app/AppContext';
 import { Icon } from './Icon';
 import { fmtMoney } from '../lib/utils';
@@ -149,7 +151,22 @@ function InboxRow({
 }
 
 export function InboxDashboard() {
-  const { trips, inbox, assignInboxItem, dismissInboxItem } = useApp();
+  const { trips, inbox, assignInboxItem, dismissInboxItem, inboxToken } = useApp();
+  const [addressCopied, setAddressCopied] = useState(false);
+
+  // The address is derived from the user's routing token; there is no address
+  // to advertise until one exists.
+  const forwardAddress = inboxToken ? `${INBOX_MAILBOX}+${inboxToken}@${INBOX_DOMAIN}` : null;
+
+  const copyAddress = async (address: string) => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setAddressCopied(true);
+      window.setTimeout(() => setAddressCopied(false), 2000);
+    } catch {
+      setAddressCopied(false);
+    }
+  };
   const navigate = useNavigate();
   const openTrip = (id: string) => navigate(`/app/trip/${id}`);
 
@@ -188,7 +205,7 @@ export function InboxDashboard() {
       <div className="forward-card">
         <div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, letterSpacing: '-0.01em' }}>
-            Forward anything to <em style={{ fontStyle: 'italic' }}>quincy+trips@travelos.app</em>
+            Forward anything to <em style={{ fontStyle: 'italic' }}>{forwardAddress ?? 'your forwarding address'}</em>
           </div>
           <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 4, lineHeight: 1.5 }}>
             Hotel confirms, Viator receipts, OpenTable reservations, flight emails — anything.
@@ -208,7 +225,13 @@ export function InboxDashboard() {
             </span>
           </div>
         </div>
-        <button className="btn">Copy address</button>
+        <button
+          className="btn"
+          disabled={!forwardAddress}
+          onClick={forwardAddress ? () => void copyAddress(forwardAddress) : undefined}
+        >
+          {addressCopied ? 'Copied' : 'Copy address'}
+        </button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 24 }}>

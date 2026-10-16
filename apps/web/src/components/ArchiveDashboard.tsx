@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../app/AppContext';
-import { daysBetween, fmtMoney } from '../lib/utils';
+import { daysBetween } from '../lib/utils';
+import { HOME_CURRENCY, fmtMoneyIn, sumInCurrency } from '../lib/currency';
 import { TripCard } from './TripCard';
 
 export function ArchiveDashboard() {
@@ -23,8 +24,11 @@ export function ArchiveDashboard() {
     (s, t) => s + (t.nights || (t.start_date && t.end_date ? daysBetween(t.start_date, t.end_date) : 0)),
     0,
   );
-  const totalSpend = archived.reduce((s, t) => s + (t.budget_spent || 0), 0);
-  const avgSpend = archived.length > 0 ? totalSpend / archived.length : 0;
+  // Same reasoning as the pipeline metrics: only home-currency trips are
+  // summed, and anything left out is disclosed rather than silently folded in.
+  const lifetime = sumInCurrency(archived, HOME_CURRENCY, (t) => t.budget_spent, (t) => t.budget_currency);
+  const totalSpend = lifetime.total;
+  const avgSpend = lifetime.counted > 0 ? totalSpend / lifetime.counted : 0;
 
   const countryList = [...allCountries].slice(0, 3).join(', ') + (allCountries.size > 3 ? '…' : '');
 
@@ -48,8 +52,11 @@ export function ArchiveDashboard() {
         </div>
         <div className="metric">
           <div className="label">Lifetime spend</div>
-          <div className="value">{fmtMoney(totalSpend)}</div>
-          <div className="hint">avg {fmtMoney(avgSpend)}/trip</div>
+          <div className="value">{fmtMoneyIn(totalSpend, HOME_CURRENCY)}</div>
+          <div className="hint">
+            avg {fmtMoneyIn(avgSpend, HOME_CURRENCY)}/trip
+            {lifetime.excluded > 0 && ` · ${lifetime.excluded} in other currencies not counted`}
+          </div>
         </div>
       </div>
 
@@ -58,7 +65,7 @@ export function ArchiveDashboard() {
         .sort((a, b) => b - a)
         .map((y) => {
           const yearTrips = byYear[y];
-          const ySpend = yearTrips.reduce((s, t) => s + (t.budget_spent || 0), 0);
+          const ySpend = sumInCurrency(yearTrips, HOME_CURRENCY, (t) => t.budget_spent, (t) => t.budget_currency).total;
           const yDays = yearTrips.reduce((s, t) => s + (t.nights || 0), 0);
           return (
             <div key={y} className="archive-year">
@@ -67,7 +74,7 @@ export function ArchiveDashboard() {
                 <div className="archive-year-stats">
                   {yearTrips.length} {yearTrips.length === 1 ? 'trip' : 'trips'}<br />
                   {yDays} days<br />
-                  {fmtMoney(ySpend)}
+                  {fmtMoneyIn(ySpend, HOME_CURRENCY)}
                 </div>
               </div>
               <div className="archive-trips">
