@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TODAY } from '../lib/data';
-import { useApp } from '../app/AppContext';
-import { Icon } from './Icon';
+import { TODAY } from '../../lib/data';
+import { useApp } from '../../app/AppContext';
+import { Icon } from '../atoms/Icon';
 
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -10,7 +10,7 @@ function iso(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
-export function CalendarDashboard() {
+export function CalendarPage() {
   const { trips } = useApp();
   const navigate = useNavigate();
   const onOpen = (id: string) => navigate(`/app/trip/${id}`);

@@ -2,12 +2,12 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
-vi.mock('../lib/db', () => ({
+vi.mock('../../lib/db', () => ({
   signInWithMagicLink: vi.fn(),
 }));
 
-import { signInWithMagicLink } from '../lib/db';
-import { Login } from './Login';
+import { signInWithMagicLink } from '../../lib/db';
+import { LoginPage } from './LoginPage';
 
 const mockSignIn = signInWithMagicLink as ReturnType<typeof vi.fn>;
 
@@ -15,7 +15,7 @@ function renderLogin() {
   return render(
     <MemoryRouter initialEntries={['/login']}>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/app/pipeline" element={<div data-testid="app-pipeline">app</div>} />
       </Routes>
     </MemoryRouter>,
@@ -25,7 +25,7 @@ function renderLogin() {
 beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.useRealTimers());
 
-describe('Login', () => {
+describe('LoginPage', () => {
   it('renders email input and disabled submit button when empty', () => {
     renderLogin();
     expect(screen.getByLabelText('Email address')).toBeInTheDocument();

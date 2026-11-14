@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../lib/db', () => ({
+vi.mock('../../lib/db', () => ({
   getSession: vi.fn(),
   signInWithMagicLink: vi.fn(),
   subscribeAuthChange: vi.fn().mockReturnValue({ unsubscribe: vi.fn() }),
@@ -18,24 +18,24 @@ vi.mock('../lib/db', () => ({
   deleteInboxItem: vi.fn(),
 }));
 
-import { AppProvider, useApp } from '../app/AppContext';
-import { INBOX, INSIGHTS, INTEGRATIONS, TODAY, TRIPS } from '../lib/data';
-import type { Trip } from '../lib/types';
-import { ArchiveDashboard } from './ArchiveDashboard';
-import { Avatars } from './Avatars';
-import { CalendarDashboard } from './CalendarDashboard';
-import { CategoryPips } from './CategoryPips';
-import { InboxDashboard } from './InboxDashboard';
-import { BOOKING_ICONS, Icon } from './Icon';
-import { AddTripModal } from './modals/AddTripModal';
-import { IntegrationsModal } from './modals/IntegrationsModal';
-import { PipelineDashboard } from './PipelineDashboard';
-import { StageDot } from './StageDot';
-import { TripCard } from './TripCard';
-import { TweaksPanel } from './TweaksPanel';
+import { AppProvider, useApp } from '../../app/AppContext';
+import { INBOX, INSIGHTS, INTEGRATIONS, TODAY, TRIPS } from '../../lib/data';
+import type { Trip } from '../../lib/types';
+import { Avatars } from '../molecules/Avatars';
+import { CategoryPips } from '../molecules/CategoryPips';
+import { BOOKING_ICONS, Icon } from '../atoms/Icon';
+import { StageDot } from '../atoms/StageDot';
+import { AddTripModal } from '../organisms/AddTripModal';
+import { IntegrationsModal } from '../organisms/IntegrationsModal';
+import { TripCard } from '../organisms/TripCard';
+import { TweaksPanel } from '../organisms/TweaksPanel';
+import { ArchivePage } from './ArchivePage';
+import { CalendarPage } from './CalendarPage';
+import { InboxPage } from './InboxPage';
+import { PipelinePage } from './PipelinePage';
 
 // AddTripModal geocodes on destination blur; keep these tests off the network.
-vi.mock('../lib/clients/openMeteo', () => ({
+vi.mock('../../lib/clients/openMeteo', () => ({
   geocode: vi.fn().mockResolvedValue(null),
 }));
 
@@ -79,7 +79,7 @@ function familyFilteredPipeline() {
     return (
       <>
         <button onClick={() => toggleCategoryFilter('family')}>Seed family filter</button>
-        <PipelineDashboard />
+        <PipelinePage />
       </>
     );
   }
@@ -179,7 +179,7 @@ describe('small components', () => {
 
 describe('dashboard components', () => {
   it('renders archive dashboard and empty archive state', () => {
-    const { unmount } = renderWithApp(<ArchiveDashboard />);
+    const { unmount } = renderWithApp(<ArchivePage />);
     fireEvent.click(screen.getByText('Rome'));
     expect(navigateMock).toHaveBeenCalledWith('/app/trip/tr-rome');
 
@@ -188,7 +188,7 @@ describe('dashboard components', () => {
     });
 
     unmount();
-    renderWithApp(<ArchiveDashboard />);
+    renderWithApp(<ArchivePage />);
     expect(screen.getByText('Nothing archived yet.')).toBeInTheDocument();
   });
 
@@ -246,7 +246,7 @@ describe('dashboard components', () => {
       budget_spent: 75,
     });
 
-    renderWithApp(<ArchiveDashboard />);
+    renderWithApp(<ArchivePage />);
     expect(screen.getByText('Italy, Germany, Mexico…')).toBeInTheDocument();
     expect(screen.getByText((_, element) => element?.textContent === '1 trip0 days$0')).toBeInTheDocument();
     expect(screen.getByText('2026')).toBeInTheDocument();
@@ -284,7 +284,7 @@ describe('dashboard components', () => {
       },
     );
 
-    renderWithApp(<CalendarDashboard />);
+    renderWithApp(<CalendarPage />);
     fireEvent.click(screen.getAllByRole('button')[0]);
     fireEvent.click(screen.getAllByRole('button')[1]);
     fireEvent.click(screen.getByRole('button', { name: /Today/i }));
@@ -305,7 +305,7 @@ describe('dashboard components', () => {
       stage: 'planning',
     });
 
-    renderWithApp(<CalendarDashboard />);
+    renderWithApp(<CalendarPage />);
     const chip = screen.getByText('No Cover');
     expect(chip).toHaveStyle({ background: 'oklch(48% 0.14 30)' });
     fireEvent.click(chip);
@@ -313,7 +313,7 @@ describe('dashboard components', () => {
   });
 
   it('renders inbox dashboard actions and empty state', () => {
-    const { unmount } = renderWithApp(<InboxDashboard />);
+    const { unmount } = renderWithApp(<InboxPage />);
     fireEvent.click(screen.getByText('Lisbon'));
     fireEvent.click(screen.getAllByRole('button', { name: /Attach|Dismiss/i })[0]);
     fireEvent.click(screen.getAllByRole('button', { name: /Dismiss/i })[0]);
@@ -321,7 +321,7 @@ describe('dashboard components', () => {
 
     INBOX.splice(0, INBOX.length);
     unmount();
-    renderWithApp(<InboxDashboard />);
+    renderWithApp(<InboxPage />);
     expect(screen.getByText('Inbox zero.')).toBeInTheDocument();
   });
 
@@ -331,7 +331,7 @@ describe('dashboard components', () => {
     });
     TRIPS.find((trip) => trip.id === 'tr-lisbon')!.stage = 'booked';
 
-    const { unmount } = renderWithApp(<PipelineDashboard />);
+    const { unmount } = renderWithApp(<PipelinePage />);
 
     const lisbonCards = screen.getAllByText('Lisbon');
     fireEvent.click(lisbonCards[lisbonCards.length - 1]);
@@ -365,7 +365,7 @@ describe('dashboard components', () => {
       }
     });
     unmount();
-    renderWithApp(<PipelineDashboard />);
+    renderWithApp(<PipelinePage />);
     expect(screen.getByText('nothing booked')).toBeInTheDocument();
   });
 
@@ -374,7 +374,7 @@ describe('dashboard components', () => {
     if (!itemWithoutSuggestion) throw new Error('Expected inbox fixture in-4');
     itemWithoutSuggestion.suggested_trip = undefined;
 
-    renderWithApp(<InboxDashboard />);
+    renderWithApp(<InboxPage />);
     const row = screen.getByText(itemWithoutSuggestion.subject).closest('.inbox-row') as HTMLElement;
     expect(within(row).getByRole('button', { name: /Pick trip/i })).toBeDisabled();
     fireEvent.click(within(row).getByRole('button', { name: /Dismiss/i }));
@@ -399,7 +399,7 @@ describe('dashboard components', () => {
 
     noSourceItem.source = undefined as never;
 
-    renderWithApp(<InboxDashboard />);
+    renderWithApp(<InboxPage />);
 
     const fallbackRow = screen.getByText(fallbackItem.subject).closest('.inbox-row') as HTMLElement;
     expect(within(fallbackRow).getByText('Manual')).toBeInTheDocument();
@@ -448,7 +448,7 @@ describe('dashboard components', () => {
       body: 'No trip attached',
     });
 
-    renderWithApp(<PipelineDashboard />);
+    renderWithApp(<PipelinePage />);
 
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByText('day')).toBeInTheDocument();

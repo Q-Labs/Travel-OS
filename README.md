@@ -248,9 +248,15 @@ graph TD
 ```
 apps/web/
   src/
-    app/         — AppLayout, AppContext (all global state), router, Login
-    components/  — PipelineDashboard, InboxDashboard, CalendarDashboard,
-                   ArchiveDashboard, TripCard, modals/, …
+    app/         — AppContext (all global state), router, route loaders
+    components/  — atomic design; a level may import only from the levels below it
+                   atoms/       Icon, Avatar, CatPip, SourceChip, VendorMark, MiniProgress, StageDot
+                   molecules/   Avatars, MetricTile, ParsedCard, DocumentCard, TripStat, EmptyState, …
+                   organisms/   TripCard, KanbanBoard, YearRibbon, Sidebar, Topbar, InboxRow,
+                                BookingsPanel, SplitBudget, TripDetailContent, AddTripModal, …
+                   templates/   AppShell (signed-in frame), AuthLayout (signed-out frame)
+                   pages/       one per route: Pipeline, Inbox, Calendar, Archive, TripDetail,
+                                Login, plus AppLayout
     lib/         — types.ts, db.ts (Supabase CRUD + Realtime), data.ts (fixtures), utils.ts,
                    rows.ts (row → domain mappers), insights.ts (pure insight rules),
                    inboundEmail.ts (provider webhook adapters), ical.ts (RFC 5545 writer),

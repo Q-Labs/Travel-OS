@@ -5,9 +5,15 @@
 ```
 apps/web/
   src/
-    app/         — AppContext (all global state + useApp), router, routes, Login, main
-    components/  — PipelineDashboard, InboxDashboard, CalendarDashboard, ArchiveDashboard,
-                   TripCard, TweaksPanel, modals/ (AddTripModal, IntegrationsModal), …
+    app/         — AppContext (all global state + useApp), router, routes (loaders), main
+    components/  — atomic design; a level may import only from the levels below it
+                   atoms/       Icon, Avatar, CatPip, SourceChip, VendorMark, MiniProgress, StageDot
+                   molecules/   Avatars, MetricTile, ParsedCard, DocumentCard, TripStat, EmptyState, …
+                   organisms/   TripCard, KanbanBoard, YearRibbon, Sidebar, Topbar, InboxRow,
+                                BookingsPanel, SplitBudget, TripDetailContent, AddTripModal, …
+                   templates/   AppShell (signed-in frame), AuthLayout (signed-out frame)
+                   pages/       one per route: Pipeline, Inbox, Calendar, Archive, TripDetail,
+                                Login, plus AppLayout
     lib/         — types.ts, data.ts (fixtures), db.ts (Supabase CRUD + Realtime),
                    trips.ts (pure trip selectors), supabase.ts (client), utils.ts
 api/             — Vercel serverless functions. These must live at the repo root:
@@ -19,7 +25,9 @@ api/             — Vercel serverless functions. These must live at the repo ro
 ```
 
 All state lives in `AppContext`; mutations flow `useApp()` action → `lib/db.ts` → Supabase.
-Components read via `useApp()` and never hold trip data locally. Root `vite.config.ts`
+Components read via `useApp()` and never hold trip data locally. Only organisms and pages
+call `useApp()`; atoms, molecules and templates take everything as props. New UI goes in the
+lowest level that fits. Root `vite.config.ts`
 configures both the build and the Vitest runner. Requires Node ≥ 24 (see `package.json`).
 
 ## Commands

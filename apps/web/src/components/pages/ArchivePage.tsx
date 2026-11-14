@@ -1,10 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import { useApp } from '../app/AppContext';
-import { daysBetween } from '../lib/utils';
-import { HOME_CURRENCY, fmtMoneyIn, sumInCurrency } from '../lib/currency';
-import { TripCard } from './TripCard';
+import { useApp } from '../../app/AppContext';
+import { daysBetween } from '../../lib/utils';
+import { HOME_CURRENCY, fmtMoneyIn, sumInCurrency } from '../../lib/currency';
+import { MetricTile } from '../molecules/MetricTile';
+import { EmptyState } from '../molecules/EmptyState';
+import { TripCard } from '../organisms/TripCard';
 
-export function ArchiveDashboard() {
+export function ArchivePage() {
   const { trips } = useApp();
   const navigate = useNavigate();
   const onOpen = (id: string) => navigate(`/app/trip/${id}`);
@@ -35,29 +37,19 @@ export function ArchiveDashboard() {
   return (
     <div className="archive">
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginTop: 16, marginBottom: 20 }}>
-        <div className="metric">
-          <div className="label">Lifetime trips</div>
-          <div className="value">{archived.length}</div>
-          <div className="hint">completed and logged</div>
-        </div>
-        <div className="metric">
-          <div className="label">Countries</div>
-          <div className="value">{allCountries.size}</div>
-          <div className="hint">{countryList}</div>
-        </div>
-        <div className="metric">
-          <div className="label">Days traveled</div>
-          <div className="value">{allDays}</div>
-          <div className="hint">across all archived trips</div>
-        </div>
-        <div className="metric">
-          <div className="label">Lifetime spend</div>
-          <div className="value">{fmtMoneyIn(totalSpend, HOME_CURRENCY)}</div>
-          <div className="hint">
-            avg {fmtMoneyIn(avgSpend, HOME_CURRENCY)}/trip
-            {lifetime.excluded > 0 && ` · ${lifetime.excluded} in other currencies not counted`}
-          </div>
-        </div>
+        <MetricTile label="Lifetime trips" value={archived.length} hint="completed and logged" />
+        <MetricTile label="Countries" value={allCountries.size} hint={countryList} />
+        <MetricTile label="Days traveled" value={allDays} hint="across all archived trips" />
+        <MetricTile
+          label="Lifetime spend"
+          value={fmtMoneyIn(totalSpend, HOME_CURRENCY)}
+          hint={
+            <>
+              avg {fmtMoneyIn(avgSpend, HOME_CURRENCY)}/trip
+              {lifetime.excluded > 0 && ` · ${lifetime.excluded} in other currencies not counted`}
+            </>
+          }
+        />
       </div>
 
       {Object.keys(byYear)
@@ -87,12 +79,7 @@ export function ArchiveDashboard() {
         })}
 
       {archived.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-3)' }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 26, color: 'var(--ink-2)' }}>
-            Nothing archived yet.
-          </div>
-          <div style={{ marginTop: 6, fontSize: 13 }}>Completed trips will appear here.</div>
-        </div>
+        <EmptyState title="Nothing archived yet." body="Completed trips will appear here." />
       )}
     </div>
   );

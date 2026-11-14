@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchDestinationSummary, type DestinationSummary } from '../lib/clients/wikipedia';
+import { fetchDestinationSummary, type DestinationSummary } from '../../lib/clients/wikipedia';
 
 type Loaded = { for: string; summary: DestinationSummary | null };
 

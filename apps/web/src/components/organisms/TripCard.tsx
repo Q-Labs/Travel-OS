@@ -1,8 +1,8 @@
-import { TODAY } from '../lib/data';
-import { CAT_MAP, coverStyle, daysBetween, fmtDateRange } from '../lib/utils';
-import { fmtMoneyIn } from '../lib/currency';
-import type { Trip } from '../lib/types';
-import { Avatars } from './Avatars';
+import { TODAY } from '../../lib/data';
+import { CAT_MAP, coverStyle, daysBetween, fmtDateRange } from '../../lib/utils';
+import { fmtMoneyIn } from '../../lib/currency';
+import type { Trip } from '../../lib/types';
+import { Avatars } from '../molecules/Avatars';
 
 type Props = {
   trip: Trip;

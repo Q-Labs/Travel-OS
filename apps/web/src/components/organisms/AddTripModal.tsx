@@ -5,7 +5,7 @@ import type { Trip, TripCategory } from '../../lib/types';
 import { CATEGORIES } from '../../lib/utils';
 import { geocode } from '../../lib/clients/openMeteo';
 import { HOME_CURRENCY } from '../../lib/currency';
-import { Icon } from '../Icon';
+import { Icon } from '../atoms/Icon';
 
 type FormData = {
   destination: string;

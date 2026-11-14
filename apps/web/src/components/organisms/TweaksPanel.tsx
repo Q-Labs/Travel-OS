@@ -1,5 +1,5 @@
-import { useApp } from '../app/AppContext';
-import { Icon } from './Icon';
+import { useApp } from '../../app/AppContext';
+import { Icon } from '../atoms/Icon';
 
 type AccentKey = 'orange' | 'olive' | 'blue' | 'plum' | 'sand';
 

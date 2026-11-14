@@ -10,16 +10,15 @@ const state: Record<string, unknown> = {
   setShowIntegrations: vi.fn(),
 };
 
-vi.mock('../app/AppContext', () => ({ useApp: () => state }));
 vi.mock('../../app/AppContext', () => ({ useApp: () => state }));
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return { ...actual, useNavigate: () => vi.fn() };
 });
 
-import { ArchiveDashboard } from './ArchiveDashboard';
-import { InboxDashboard } from './InboxDashboard';
-import { IntegrationsModal } from './modals/IntegrationsModal';
+import { ArchivePage } from './ArchivePage';
+import { InboxPage } from './InboxPage';
+import { IntegrationsModal } from '../organisms/IntegrationsModal';
 
 const writeText = vi.fn();
 
@@ -33,20 +32,20 @@ afterEach(() => vi.clearAllMocks());
 
 describe('forwarding address', () => {
   it('advertises nothing to forward to before a token exists', () => {
-    render(<InboxDashboard />);
+    render(<InboxPage />);
     expect(screen.getByText(/your forwarding address/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Copy address/ })).toBeDisabled();
   });
 
   it('shows the real plus-tagged address once a token exists', () => {
     state['inboxToken'] = 'a1b2c3';
-    render(<InboxDashboard />);
+    render(<InboxPage />);
     expect(screen.getByText(/trips\+a1b2c3@/)).toBeInTheDocument();
   });
 
   it('copies the address and reports it', async () => {
     state['inboxToken'] = 'a1b2c3';
-    render(<InboxDashboard />);
+    render(<InboxPage />);
     fireEvent.click(screen.getByRole('button', { name: /Copy address/ }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(expect.stringContaining('trips+a1b2c3@')));
     expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
@@ -55,7 +54,7 @@ describe('forwarding address', () => {
   it('does not claim success when the clipboard refuses', async () => {
     state['inboxToken'] = 'a1b2c3';
     writeText.mockRejectedValue(new Error('denied'));
-    render(<InboxDashboard />);
+    render(<InboxPage />);
     fireEvent.click(screen.getByRole('button', { name: /Copy address/ }));
     await waitFor(() => expect(writeText).toHaveBeenCalled());
     expect(screen.queryByRole('button', { name: 'Copied' })).toBeNull();
@@ -92,7 +91,7 @@ describe('forwarding address', () => {
     };
     const jpy = { ...usd, id: 'b', destination: 'Sapporo', budget_currency: 'JPY', budget_spent: 900000 };
     state['trips'] = [usd, jpy];
-    render(<ArchiveDashboard />);
+    render(<ArchivePage />);
     // The yen trip is excluded from the dollar total rather than folded in.
     expect(screen.getByText(/1 in other currencies not counted/)).toBeInTheDocument();
     expect(screen.getByText('$2,000')).toBeInTheDocument();

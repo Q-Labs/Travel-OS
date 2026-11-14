@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../../app/AppContext';
 import { INTEGRATIONS } from '../../lib/data';
 import { INBOX_DOMAIN, INBOX_MAILBOX } from '../../lib/inboxAddress';
-import { Icon } from '../Icon';
+import { Icon } from '../atoms/Icon';
 
 export function IntegrationsModal() {
   const { setShowIntegrations, inboxToken } = useApp();

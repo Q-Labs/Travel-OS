@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { fetchRates } from '../lib/clients/frankfurter';
-import { HOME_CURRENCY, convertAmount, fmtMoneyIn } from '../lib/currency';
-import type { Trip } from '../lib/types';
+import { fetchRates } from '../../lib/clients/frankfurter';
+import { HOME_CURRENCY, convertAmount, fmtMoneyIn } from '../../lib/currency';
+import type { Trip } from '../../lib/types';
 
 type Loaded = { for: string; value: number | null };
 

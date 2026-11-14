@@ -4,14 +4,14 @@ import { render, screen, waitFor } from '@testing-library/react';
 const fetchRates = vi.fn();
 const fetchDestinationSummary = vi.fn();
 
-vi.mock('../lib/clients/frankfurter', () => ({ fetchRates: (...a: unknown[]) => fetchRates(...a) }));
-vi.mock('../lib/clients/wikipedia', () => ({
+vi.mock('../../lib/clients/frankfurter', () => ({ fetchRates: (...a: unknown[]) => fetchRates(...a) }));
+vi.mock('../../lib/clients/wikipedia', () => ({
   fetchDestinationSummary: (...a: unknown[]) => fetchDestinationSummary(...a),
 }));
 
 import { BudgetConversion } from './BudgetConversion';
 import { DestinationBlurb } from './DestinationBlurb';
-import type { Trip } from '../lib/types';
+import type { Trip } from '../../lib/types';
 
 function makeTrip(overrides: Partial<Trip> = {}): Trip {
   return {
