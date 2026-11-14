@@ -6,12 +6,15 @@
 apps/web/
   src/
     app/         — AppContext (all global state + useApp), router, routes (loaders), main
-    components/  — atomic design; a level may import only from the levels below it
-                   atoms/       Icon, Avatar, CatPip, SourceChip, VendorMark, MiniProgress, StageDot
-                   molecules/   Avatars, MetricTile, ParsedCard, DocumentCard, TripStat, EmptyState, …
-                   organisms/   TripCard, KanbanBoard, YearRibbon, Sidebar, Topbar, InboxRow,
-                                BookingsPanel, SplitBudget, TripDetailContent, AddTripModal, …
-                   templates/   AppShell (signed-in frame), AuthLayout (signed-out frame)
+    components/  — atomic design; a level may import only from the levels below it.
+                   Anything Cobalt (@q-labs/cobalt) already provides is imported, not rebuilt.
+                   atoms/       Icon, CatPip, SourceChip, StageDot, VendorMark
+                   molecules/   Avatars, BudgetConversion, CategoryPips, DestinationBlurb, DocumentCard,
+                                EmptyState, ParsedCard, ProgressRow, TripStat
+                   organisms/   TripCard, KanbanBoard, YearRibbon, MetricsStrip, InsightsStrip, Sidebar,
+                                Topbar, InboxRow, BookingsPanel, SplitBudget, TripDetailContent,
+                                AddTripModal, IntegrationsModal, TweaksPanel
+                   templates/   AuthLayout (signed-out frame); the signed-in frame is Cobalt's DashboardLayout
                    pages/       one per route: Pipeline, Inbox, Calendar, Archive, TripDetail,
                                 Login, plus AppLayout
     lib/         — types.ts, data.ts (fixtures), db.ts (Supabase CRUD + Realtime),
