@@ -4,12 +4,16 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 vi.mock('../../lib/db', () => ({
   signInWithMagicLink: vi.fn(),
+  signInWithPassword: vi.fn(),
+  signInWithOAuth: vi.fn(),
 }));
 
-import { signInWithMagicLink } from '../../lib/db';
+import { signInWithMagicLink, signInWithOAuth, signInWithPassword } from '../../lib/db';
 import { LoginPage } from './LoginPage';
 
 const mockSignIn = signInWithMagicLink as ReturnType<typeof vi.fn>;
+const mockPassword = signInWithPassword as ReturnType<typeof vi.fn>;
+const mockOAuth = signInWithOAuth as ReturnType<typeof vi.fn>;
 
 function renderLogin() {
   return render(
@@ -101,20 +105,69 @@ describe('LoginPage', () => {
     expect(screen.getByRole('button', { name: /^sign in$/i })).toBeInTheDocument();
   });
 
-  it('password mode: shows loading spinner when submitting', async () => {
-    vi.useFakeTimers();
-    renderLogin();
+  const fillPasswordForm = () => {
     fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'user@example.com' } });
     fireEvent.click(screen.getByRole('button', { name: 'Password' }));
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
-    });
-    expect(screen.getByText(/signing in/i)).toBeInTheDocument();
-    await act(async () => { vi.runAllTimers(); });
-    expect(screen.getByTestId('app-pipeline')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'hunter2' } });
+  };
+
+  it('password mode: signs in through Supabase and opens the app', async () => {
+    mockPassword.mockResolvedValue({ error: null });
+    renderLogin();
+    fillPasswordForm();
+    fireEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
+    await waitFor(() => expect(screen.getByTestId('app-pipeline')).toBeInTheDocument());
+    expect(mockPassword).toHaveBeenCalledWith('user@example.com', 'hunter2');
   });
 
-  it('sent state shows Skip for now link and Different email button', async () => {
+  it('password mode: shows a signing-in state while the request is pending', async () => {
+    let resolve: (v: { error: null }) => void = () => {};
+    mockPassword.mockReturnValue(new Promise((r) => { resolve = r; }));
+    renderLogin();
+    fillPasswordForm();
+    fireEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
+    expect(await screen.findByText(/signing in/i)).toBeInTheDocument();
+    expect(screen.queryByTestId('app-pipeline')).not.toBeInTheDocument();
+    await act(async () => { resolve({ error: null }); });
+  });
+
+  it('password mode: wrong credentials show the error and let the user retry', async () => {
+    mockPassword.mockResolvedValue({ error: new Error('Invalid login credentials') });
+    renderLogin();
+    fillPasswordForm();
+    fireEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Invalid login credentials');
+    expect(screen.queryByTestId('app-pipeline')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^sign in$/i })).not.toBeDisabled();
+  });
+
+  it('magic link submits the trimmed email', async () => {
+    mockSignIn.mockResolvedValue({ error: null });
+    renderLogin();
+    fireEvent.change(screen.getByLabelText('Email address'), { target: { value: '  user@example.com ' } });
+    fireEvent.click(screen.getByRole('button', { name: /send magic link/i }));
+    await waitFor(() => expect(mockSignIn).toHaveBeenCalledWith('user@example.com'));
+  });
+
+  it.each([
+    ['Continue with Google', 'google'],
+    ['Continue with Apple', 'apple'],
+  ])('%s starts the %s OAuth flow', async (label, provider) => {
+    mockOAuth.mockResolvedValue({ error: null });
+    renderLogin();
+    fireEvent.click(screen.getByRole('button', { name: label }));
+    await waitFor(() => expect(mockOAuth).toHaveBeenCalledWith(provider));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('shows the error when a social provider cannot be started', async () => {
+    mockOAuth.mockResolvedValue({ error: new Error('provider is not enabled') });
+    renderLogin();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with Apple' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('provider is not enabled');
+  });
+
+  it('sent state offers a different email and no way around auth', async () => {
     mockSignIn.mockResolvedValue({ error: null });
     renderLogin();
     fireEvent.change(screen.getByLabelText('Email address'), {
@@ -122,7 +175,7 @@ describe('LoginPage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /send magic link/i }));
     await waitFor(() => expect(screen.getByText(/check your email/i)).toBeInTheDocument());
-    expect(screen.getByRole('link', { name: /skip for now/i })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /skip for now/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /different email/i })).toBeInTheDocument();
   });
 

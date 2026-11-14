@@ -20,7 +20,7 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 | UI | React 18 + TypeScript (strict) |
 | Build / dev server | Vite 5 |
 | Routing | React Router v6 |
-| Backend | Supabase (Postgres + magic-link auth + Realtime) |
+| Backend | Supabase (Postgres + Auth: magic link, password, Google, Apple + Realtime) |
 | AI | Anthropic Claude Haiku (email parsing via `@anthropic-ai/sdk`) |
 | Weather / geocoding | [Open-Meteo](https://open-meteo.com) — no API key, no account |
 | Exchange rates | [Frankfurter](https://frankfurter.dev) (ECB reference rates) — no API key |
@@ -44,7 +44,11 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 Supabase provides the database, authentication, and real-time subscriptions.
 
 1. Go to [supabase.com](https://supabase.com) and create a new project.
-2. Once provisioned, open **Authentication → Providers** and ensure **Email** is enabled (magic-link / OTP — no password required).
+2. Once provisioned, open **Authentication → Providers** and enable the sign-in methods the login screen offers:
+   - **Email** — covers both the magic link and the email + password mode. Create password users under **Authentication → Users**.
+   - **Google** and **Apple** — each needs OAuth credentials from the provider's console. A provider that is not enabled makes its button show an error instead of signing in.
+
+   Then open **Authentication → URL Configuration** and add `http://localhost:5173/app/pipeline` and your production URL's `/app/pipeline` to **Redirect URLs**. Every sign-in method sends the user back there; without it Supabase falls back to the Site URL.
 3. Open **Settings → API** and copy:
    - **Project URL** → `VITE_SUPABASE_URL` and `SUPABASE_URL`
    - **anon / public key** → `VITE_SUPABASE_ANON_KEY`
@@ -161,7 +165,7 @@ cp .env.example .env   # fill in your credentials (see Environment variables bel
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) and sign in with your email via magic link.
+Open [http://localhost:5173](http://localhost:5173) and sign in with a magic link, email + password, Google or Apple.
 
 On first login the app seeds fixture trips, bookings, and inbox items so you have something to explore immediately.
 
