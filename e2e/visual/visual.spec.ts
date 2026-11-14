@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Visual snapshots', () => {
+  // The dashboard greeting ("Good afternoon") follows the wall clock, so pin it:
+  // otherwise the snapshot only matches at the hour it was taken.
+  test.beforeEach(async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-04-20T14:00:00'));
+  });
+
   test('login page', async ({ page }) => {
     await page.goto('/login');
     await expect(page.locator('.brand-name')).toBeVisible();
@@ -65,7 +71,7 @@ test.describe('Visual snapshots', () => {
 
   test('tweaks panel open', async ({ page }) => {
     await page.goto('/app/pipeline');
-    await page.locator('.sidebar button.nav-item', { hasText: 'Tweaks' }).click();
+    await page.getByRole('button', { name: 'Tweaks' }).click();
     await expect(page.locator('.tweaks-panel')).toBeVisible();
     await expect(page).toHaveScreenshot('tweaks-panel.png', { maxDiffPixelRatio: 0.02 });
   });

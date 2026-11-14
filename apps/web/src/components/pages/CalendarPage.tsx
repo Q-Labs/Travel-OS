@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { TODAY } from '../../lib/data';
 import { useApp } from '../../app/AppContext';
 import { Icon } from '../atoms/Icon';
+import { Button } from '@q-labs/cobalt';
 
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -56,13 +57,13 @@ export function CalendarPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '8px 0 20px' }}>
         <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 400, fontSize: 32, margin: 0, letterSpacing: '-0.01em' }}>
           {first.toLocaleDateString('en-US', { month: 'long' })}{' '}
-          <em style={{ fontStyle: 'italic', color: 'var(--ink-3)' }}>{year}</em>
+          <em style={{ fontStyle: 'normal', color: 'var(--ink-3)' }}>{year}</em>
         </h2>
         <div style={{ display: 'flex', gap: 4 }}>
           <button className="icon-btn" onClick={goPrev}><Icon.ChevronLeft /></button>
           <button className="icon-btn" onClick={goNext}><Icon.ChevronRight /></button>
         </div>
-        <button className="btn ghost" style={{ marginLeft: 8 }} onClick={goToday}>Today</button>
+        <Button variant="ghost"  style={{ marginLeft: 8 }} onClick={goToday}>Today</Button>
       </div>
 
       <div className="cal-grid">

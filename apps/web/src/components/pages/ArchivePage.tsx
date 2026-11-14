@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../app/AppContext';
 import { daysBetween } from '../../lib/utils';
 import { HOME_CURRENCY, fmtMoneyIn, sumInCurrency } from '../../lib/currency';
-import { MetricTile } from '../molecules/MetricTile';
+import { MetricCard } from '@q-labs/cobalt';
 import { EmptyState } from '../molecules/EmptyState';
 import { TripCard } from '../organisms/TripCard';
 
@@ -37,18 +37,15 @@ export function ArchivePage() {
   return (
     <div className="archive">
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginTop: 16, marginBottom: 20 }}>
-        <MetricTile label="Lifetime trips" value={archived.length} hint="completed and logged" />
-        <MetricTile label="Countries" value={allCountries.size} hint={countryList} />
-        <MetricTile label="Days traveled" value={allDays} hint="across all archived trips" />
-        <MetricTile
+        <MetricCard label="Lifetime trips" value={String(archived.length)} delta="completed and logged" />
+        <MetricCard label="Countries" value={String(allCountries.size)} delta={countryList} />
+        <MetricCard label="Days traveled" value={String(allDays)} delta="across all archived trips" />
+        <MetricCard
           label="Lifetime spend"
           value={fmtMoneyIn(totalSpend, HOME_CURRENCY)}
-          hint={
-            <>
-              avg {fmtMoneyIn(avgSpend, HOME_CURRENCY)}/trip
-              {lifetime.excluded > 0 && ` · ${lifetime.excluded} in other currencies not counted`}
-            </>
-          }
+          delta={`avg ${fmtMoneyIn(avgSpend, HOME_CURRENCY)}/trip${
+            lifetime.excluded > 0 ? ` · ${lifetime.excluded} in other currencies not counted` : ''
+          }`}
         />
       </div>
 

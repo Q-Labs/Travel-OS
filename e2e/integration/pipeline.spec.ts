@@ -33,10 +33,10 @@ test.describe('Pipeline dashboard', () => {
   });
 
   test('category filter hides non-matching trip cards', async ({ page }) => {
-    await page.locator('.sidebar').getByText(/Family/).click();
+    await page.getByRole('complementary').getByRole('button', { name: /Family/ }).click();
     await expect(page.locator('.tcard-dest', { hasText: 'Marrakech' })).not.toBeVisible();
     // Toggle off filter
-    await page.locator('.sidebar').getByText(/Family/).click();
+    await page.getByRole('complementary').getByRole('button', { name: /Family/ }).click();
     await expect(page.locator('.tcard-dest', { hasText: 'Marrakech' })).toBeVisible();
   });
 

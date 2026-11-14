@@ -15,7 +15,14 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          # @q-labs/cobalt lives on GitHub Packages
+          registry-url: https://npm.pkg.github.com
+          scope: '@q-labs'
       - run: npm ci
+        env:
+          # NPM_TOKEN: a PAT with read:packages. Falls back to GITHUB_TOKEN, which
+          # works once the package grants this repository access.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
       - run: npm run lint
       - run: npm test
       - run: npm run build
@@ -31,7 +38,14 @@ jobs:
         with:
           node-version: 24
           cache: npm
+          # @q-labs/cobalt lives on GitHub Packages
+          registry-url: https://npm.pkg.github.com
+          scope: '@q-labs'
       - run: npm ci
+        env:
+          # NPM_TOKEN: a PAT with read:packages. Falls back to GITHUB_TOKEN, which
+          # works once the package grants this repository access.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
       - name: Run Playwright tests

@@ -3,6 +3,7 @@ import { fmtMoneyIn } from '../../lib/currency';
 import { TRAVELERS } from '../../lib/data';
 import type { Trip, TripSplit } from '../../lib/types';
 import { Icon } from '../atoms/Icon';
+import { Button } from '@q-labs/cobalt';
 
 type SettleRow = { fromId: string; toId: string; amount: number };
 
@@ -37,9 +38,9 @@ export function SplitBudget({ splits, trip }: { splits: TripSplit[] | undefined;
         <p className="split-empty-hint">
           Default: equal split — {fmtMoneyIn(trip.budget_total / trip.travelers.length, trip.budget_currency)} per person
         </p>
-        <button className="btn primary">
+        <Button variant="primary" >
           <Icon.Plus /> Set up split
-        </button>
+        </Button>
       </div>
     );
   }
@@ -107,12 +108,11 @@ export function SplitBudget({ splits, trip }: { splits: TripSplit[] | undefined;
                 <span className="settle-names">{getName(row.fromId)} → {getName(row.toId)}</span>
               </div>
               <div className="settle-amount">{fmtMoneyIn(row.amount, trip.budget_currency)}</div>
-              <button
-                className="btn"
+              <Button variant="ghost"
                 onClick={() => setDismissed((prev) => new Set([...prev, `${row.fromId}-${row.toId}`]))}
               >
                 Mark paid
-              </button>
+              </Button>
             </div>
           ))}
         </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signInWithMagicLink, signInWithOAuth, signInWithPassword } from '../../lib/db';
 import { AuthLayout } from '../templates/AuthLayout';
+import { Button, Input, LogoMark } from '@q-labs/cobalt';
 
 type LoginStep = 'form' | 'sent' | 'error';
 type LoginMode = 'magic' | 'password';
@@ -81,7 +82,7 @@ export function LoginPage() {
       }
     >
       <div className="brand login-brand">
-        <div className="brand-mark">T</div>
+        <LogoMark name="quincy-os" size={28} />
         <div className="brand-name">Travel <em>OS</em></div>
       </div>
 
@@ -92,7 +93,7 @@ export function LoginPage() {
             We sent a link to <strong>{email}</strong>. Click it to sign in — no password needed.
           </p>
           <div className="login-sent-actions">
-            <button className="btn" onClick={() => setStep('form')}>← Different email</button>
+            <Button variant="ghost"  onClick={() => setStep('form')}>← Different email</Button>
           </div>
         </div>
       ) : (
@@ -123,7 +124,7 @@ export function LoginPage() {
           <form onSubmit={handleSubmit} className="login-form">
             <div className="field">
               <label htmlFor="login-email">Email address</label>
-              <input
+              <Input
                 id="login-email"
                 type="email"
                 value={email}
@@ -154,7 +155,7 @@ export function LoginPage() {
             {mode === 'password' && (
               <div className="field">
                 <label htmlFor="login-password">Password</label>
-                <input
+                <Input
                   id="login-password"
                   type="password"
                   value={password}
@@ -170,9 +171,8 @@ export function LoginPage() {
               </p>
             )}
 
-            <button
+            <Button variant="primary" className="login-submit"
               type="submit"
-              className="btn primary login-submit"
               disabled={!email.trim() || loading}
             >
               {loading ? (
@@ -185,12 +185,12 @@ export function LoginPage() {
               ) : (
                 'Sign in'
               )}
-            </button>
+            </Button>
           </form>
 
           <p className="login-signup">
             No account?{' '}
-            <button className="btn ghost login-signup-btn">Start free →</button>
+            <Button variant="ghost" className="login-signup-btn" >Start free →</Button>
           </p>
         </>
       )}

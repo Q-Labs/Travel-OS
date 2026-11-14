@@ -92,8 +92,8 @@ When addressing feedback on a pull request:
 
 - TypeScript strict mode — no `any`, no non-null assertions without a comment
 - React functional components only; all state via `useApp()` from `AppContext`
-- CSS via `styles.css` using the existing CSS-variable design tokens (`--accent`, `--ink`, `--surface`, …)
-- No new dependencies without discussion
+- UI is built on the **Cobalt design system** (`@q-labs/cobalt`): use its components before writing your own (`components/cobalt-usage.test.ts` guards this) and its tokens for colour, type, radius and shadow. `styles.css` holds only app-specific layout; its legacy names (`--accent`, `--ink`, `--surface`, …) alias Cobalt tokens, so never add a new palette
+- No new dependencies without discussion (`@q-labs/cobalt` is the agreed design-system dependency; installing it needs a `read:packages` token, see README)
 - Commit messages: `type(#issue): short description` (e.g. `feat(#7): add AddTripModal wizard`)
 
 ## README

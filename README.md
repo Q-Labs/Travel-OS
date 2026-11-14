@@ -27,7 +27,8 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 | Destination context | [Wikipedia REST API](https://en.wikipedia.org/api/rest_v1/) — no API key |
 | Unit tests | Vitest + Testing Library (100% branch coverage enforced) |
 | E2E / visual tests | Playwright (Chromium, with screenshot regression) |
-| Styling | Vanilla CSS with design-token variables |
+| Design system | [Cobalt](https://github.com/Q-Labs/cobalt) (`@q-labs/cobalt`): Quincy OS tokens + components |
+| Styling | App CSS on top of Cobalt's design tokens |
 | Deployment | Vercel |
 
 ## Prerequisites
@@ -36,6 +37,32 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 - A [Supabase](https://supabase.com) account
 - An [Anthropic](https://console.anthropic.com) account (for the email ingestion API)
 - A [Vercel](https://vercel.com) account (for deployment)
+- A GitHub token with `read:packages` scope, to install the private [Cobalt](https://github.com/Q-Labs/cobalt) design system (see below)
+
+## Design system (Cobalt)
+
+The UI is built on **Cobalt**, the React component library for the Quincy OS design system
+(`@q-labs/cobalt`, [repo](https://github.com/Q-Labs/cobalt), [Storybook](https://q-labs.github.io/cobalt)).
+It is published to GitHub Packages, so installing needs a token:
+
+1. The repo's `.npmrc` already maps the scope (`@q-labs:registry=https://npm.pkg.github.com`); it holds no secret.
+2. Add your token to your **user-level** `~/.npmrc`, not the repo's:
+   ```
+   //npm.pkg.github.com/:_authToken=<GitHub PAT with read:packages>
+   ```
+3. `npm ci`.
+
+**CI** reads the token from the `NPM_TOKEN` repository secret (a PAT with `read:packages`), or falls back to
+`GITHUB_TOKEN` when the package grants this repository access (package settings → *Manage Actions access*).
+**Vercel** needs an `NPM_RC` environment variable containing the two `.npmrc` lines above, with the real token.
+
+How it is used:
+
+- `main.tsx` imports `@q-labs/cobalt/styles.css` and `app/CobaltRoot.tsx` wraps the app in `CobaltProvider`, driven by the theme in `AppContext` (dark by default; light is available in Tweaks).
+- Use Cobalt's components (`Button`, `Input`, `Avatar`, `ProgressMini`, `MetricCard`, `Sidebar`, `NavItem`, `Topbar`, `DashboardLayout`, `LogoMark`, …) before writing your own. `components/cobalt-usage.test.ts` fails if a hand-rolled equivalent creeps back in.
+- Colours, fonts, radii and shadows come from Cobalt's tokens. The older variable names in `styles.css` (`--bg`, `--ink`, `--accent`, …) are aliases onto them; do not define a new palette.
+- Tweaks keeps Cobalt's accent as the default and offers three alternates that override Cobalt's `--accent-*` tokens.
+- Things Cobalt does not provide (kanban board, year ribbon, trip card, bookings table, calendar grid) live in `components/` and are styled with Cobalt tokens only.
 
 ## Service setup
 

@@ -1,9 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { Avatar } from './Avatar';
 import { CatPip } from './CatPip';
 import { BOOKING_ICONS, Icon } from './Icon';
-import { MiniProgress } from './MiniProgress';
 import { SourceChip } from './SourceChip';
 import { StageDot } from './StageDot';
 import { VendorMark } from './VendorMark';
@@ -22,11 +20,6 @@ describe('atoms', () => {
     expect(container.querySelector('.stage-dot')).toHaveStyle({ background: 'var(--stage-booked)' });
   });
 
-  it('MiniProgress fills the bar to the given percentage', () => {
-    const { container } = render(<MiniProgress value={42} />);
-    expect(container.querySelector('.mini-progress > div')).toHaveStyle({ width: '42%' });
-  });
-
   it('CatPip uses the stylesheet size unless one is given', () => {
     const { container, rerender } = render(<CatPip color="red" title="Family" />);
     const pip = () => container.querySelector('.cat-pip') as HTMLElement;
@@ -35,14 +28,6 @@ describe('atoms', () => {
     rerender(<CatPip color="red" size={10} />);
     expect(pip()).toHaveStyle({ width: '10px', height: '10px' });
     expect(pip()).not.toHaveAttribute('title');
-  });
-
-  it('Avatar shows its content and can be muted for overflow counts', () => {
-    const { rerender } = render(<Avatar title="Quincy">QI</Avatar>);
-    expect(screen.getByTitle('Quincy')).toHaveTextContent('QI');
-    expect(screen.getByTitle('Quincy').style.background).toBe('');
-    rerender(<Avatar muted>+2</Avatar>);
-    expect(screen.getByText('+2')).toHaveStyle({ background: 'var(--ink-3)' });
   });
 
   it('SourceChip labels known sources, falls back to Manual, and renders nothing without a source', () => {

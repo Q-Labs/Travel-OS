@@ -5,7 +5,6 @@ import { Avatars } from './Avatars';
 import { CategoryPips } from './CategoryPips';
 import { DocumentCard } from './DocumentCard';
 import { EmptyState } from './EmptyState';
-import { MetricTile } from './MetricTile';
 import { ParsedCard } from './ParsedCard';
 import { ProgressRow } from './ProgressRow';
 import { TripStat } from './TripStat';
@@ -18,31 +17,23 @@ const isoDaysFromToday = (days: number) => {
 
 describe('molecules', () => {
   it('Avatars shows travelers up to the max and counts the rest', () => {
-    const { container } = render(<Avatars ids={['t1', 't2', 't3', 't4', 't5', 'nobody']} max={2} />);
-    expect(container.querySelectorAll('.av')).toHaveLength(3);
+    render(<Avatars ids={['t1', 't2', 't3', 't4', 't5', 'nobody']} max={2} />);
+    expect(screen.getByTitle('Quincy')).toHaveTextContent('Q');
+    expect(screen.getByTitle('Maren')).toHaveTextContent('M');
+    expect(screen.queryByTitle('Ezra')).not.toBeInTheDocument();
     expect(screen.getByText('+3')).toBeInTheDocument();
   });
 
   it('Avatars shows no overflow count when everyone fits', () => {
-    const { container } = render(<Avatars ids={['t1']} />);
-    expect(container.querySelectorAll('.av')).toHaveLength(1);
+    render(<Avatars ids={['t1']} />);
+    expect(screen.getByTitle('Quincy')).toBeInTheDocument();
+    expect(screen.queryByText(/^\+/)).not.toBeInTheDocument();
   });
 
   it('CategoryPips labels each category', () => {
     render(<CategoryPips cats={['family', 'race']} />);
     expect(screen.getByText('Family')).toBeInTheDocument();
     expect(screen.getByText('Race')).toBeInTheDocument();
-  });
-
-  it('MetricTile renders label, value and hint, and can be emphasised', () => {
-    const { container, rerender } = render(<MetricTile label="Next trip" value="12" hint="Lisbon" />);
-    expect(container.querySelector('.metric')).not.toHaveClass('pop');
-    expect(container.querySelector('.label')).toHaveTextContent('Next trip');
-    expect(container.querySelector('.value')).toHaveTextContent('12');
-    expect(container.querySelector('.hint')).toHaveTextContent('Lisbon');
-    rerender(<MetricTile label="Next trip" value="12" hint="Lisbon" pop hintStyle={{ marginTop: 8 }} />);
-    expect(container.querySelector('.metric')).toHaveClass('pop');
-    expect(container.querySelector('.hint')).toHaveStyle({ marginTop: '8px' });
   });
 
   it('EmptyState shows a title and a line of guidance', () => {
@@ -74,17 +65,17 @@ describe('molecules', () => {
   it('TripStat shows optional subvalue and progress only when given', () => {
     const { container, rerender } = render(<TripStat label="Nights" value="5" />);
     expect(container.querySelector('small')).toBeNull();
-    expect(container.querySelector('.mini-progress')).toBeNull();
+    expect(screen.queryByRole('progressbar')).toBeNull();
     rerender(<TripStat label="Budget" value="$1 / $2" subvalue="half" progress={50} />);
     expect(screen.getByText('half')).toBeInTheDocument();
-    expect(container.querySelector('.mini-progress > div')).toHaveStyle({ width: '50%' });
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50');
   });
 
   it('ProgressRow pairs a label and value with a bar', () => {
-    const { container } = render(<ProgressRow label="Packing" value="3/4 packed" progress={75} />);
+    render(<ProgressRow label="Packing" value="3/4 packed" progress={75} />);
     expect(screen.getByText('Packing')).toBeInTheDocument();
     expect(screen.getByText('3/4 packed')).toBeInTheDocument();
-    expect(container.querySelector('.mini-progress > div')).toHaveStyle({ width: '75%' });
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '75');
   });
 
   it('DocumentCard warns when a document expires within six months', () => {

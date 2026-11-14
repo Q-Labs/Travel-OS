@@ -450,8 +450,7 @@ describe('dashboard components', () => {
 
     renderWithApp(<PipelinePage />);
 
-    expect(screen.getByText('1')).toBeInTheDocument();
-    expect(screen.getByText('day')).toBeInTheDocument();
+    expect(screen.getByText('1 day')).toBeInTheDocument();
     fireEvent.click(screen.getByTitle(/catskills/i));
     expect(navigateMock).toHaveBeenCalledWith('/app/trip/tr-catskills');
 
@@ -800,27 +799,39 @@ describe('modals and tweaks panel', () => {
 
     expect(screen.getByText(/Tweaks/)).toBeInTheDocument();
 
-    // Initial active states (light, orange, normal)
-    expect(screen.getByRole('button', { name: /Light/i })).toHaveClass('on');
-    expect(screen.getByRole('button', { name: /Dark/i })).not.toHaveClass('on');
-    expect(screen.getByTitle('Clay')).toHaveClass('on');
-    expect(screen.getByTitle('Olive')).not.toHaveClass('on');
-    expect(screen.getByRole('button', { name: /normal/i })).toHaveClass('on');
-
-    // Switch to dark theme
-    fireEvent.click(screen.getByRole('button', { name: /Dark/i }));
+    // Cobalt is dark-first: dark, the cobalt accent and normal density are the defaults
     expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
     expect(screen.getByRole('button', { name: /Dark/i })).toHaveClass('on');
     expect(screen.getByRole('button', { name: /Light/i })).not.toHaveClass('on');
+    expect(screen.getByTitle('Cobalt')).toHaveClass('on');
+    expect(screen.getByTitle('Emerald')).not.toHaveClass('on');
+    expect(screen.getByRole('button', { name: /normal/i })).toHaveClass('on');
+    // the default accent is Cobalt's own token, with no override layered on top
+    expect(document.documentElement.style.getPropertyValue('--accent-default')).toBe('');
 
-    // Switch back to light
+    // Switch to light theme
     fireEvent.click(screen.getByRole('button', { name: /Light/i }));
     expect(document.documentElement).toHaveAttribute('data-theme', 'light');
+    expect(screen.getByRole('button', { name: /Light/i })).toHaveClass('on');
+    expect(screen.getByRole('button', { name: /Dark/i })).not.toHaveClass('on');
 
-    // Change accent to olive
-    fireEvent.click(screen.getByTitle('Olive'));
-    expect(screen.getByTitle('Olive')).toHaveClass('on');
-    expect(screen.getByTitle('Clay')).not.toHaveClass('on');
+    // Switch back to dark
+    fireEvent.click(screen.getByRole('button', { name: /Dark/i }));
+    expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
+
+    // Change accent to emerald: Cobalt's accent tokens are overridden
+    fireEvent.click(screen.getByTitle('Emerald'));
+    expect(screen.getByTitle('Emerald')).toHaveClass('on');
+    expect(screen.getByTitle('Cobalt')).not.toHaveClass('on');
+    const root = document.documentElement.style;
+    expect(root.getPropertyValue('--accent-default')).toBe('#1F8A5B');
+    expect(root.getPropertyValue('--accent-hover')).toContain('#1F8A5B');
+    expect(root.getPropertyValue('--accent-subtle')).toContain('#1F8A5B');
+
+    // Back to cobalt removes every override
+    fireEvent.click(screen.getByTitle('Cobalt'));
+    expect(root.getPropertyValue('--accent-default')).toBe('');
+    expect(root.getPropertyValue('--accent-hover')).toBe('');
 
     // Change density to compact
     fireEvent.click(screen.getByRole('button', { name: /compact/i }));

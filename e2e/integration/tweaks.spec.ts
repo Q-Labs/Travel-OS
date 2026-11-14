@@ -4,7 +4,7 @@ test.describe('TweaksPanel', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/app/pipeline');
     await expect(page.getByText('Travel OS')).toBeVisible();
-    await page.locator('.sidebar button.nav-item', { hasText: 'Tweaks' }).click();
+    await page.getByRole('button', { name: 'Tweaks' }).click();
     await expect(page.locator('.tweaks-panel')).toBeVisible();
   });
 
@@ -15,33 +15,32 @@ test.describe('TweaksPanel', () => {
     await expect(page.locator('.tweaks-panel').getByText('Density')).toBeVisible();
   });
 
-  test('switching to dark theme sets data-theme="dark" on html element', async ({ page }) => {
-    await page.getByRole('button', { name: 'Dark' }).click();
+  test('is dark by default, as Cobalt is dark-first', async ({ page }) => {
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });
 
-  test('switching back to light removes dark theme', async ({ page }) => {
-    await page.getByRole('button', { name: 'Dark' }).click();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  test('switching to light and back updates data-theme on the html element', async ({ page }) => {
     await page.getByRole('button', { name: 'Light' }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    await page.getByRole('button', { name: 'Dark' }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });
 
-  test('changing accent swatch updates CSS variable', async ({ page }) => {
+  test('changing the accent overrides Cobalt\'s accent token and cobalt restores it', async ({ page }) => {
     const getAccent = () =>
       page.evaluate(() =>
-        getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()
+        getComputedStyle(document.documentElement).getPropertyValue('--accent-default').trim().toLowerCase()
       );
 
-    const defaultAccent = await getAccent();
-    await page.locator('button[title="Olive"]').click();
-    const newAccent = await getAccent();
-    expect(newAccent).not.toBe(defaultAccent);
-    expect(newAccent).toContain('oklch');
+    expect(await getAccent()).toBe('#2563eb');
+    await page.locator('button[title="Emerald"]').click();
+    expect(await getAccent()).toBe('#1f8a5b');
+    await page.locator('button[title="Cobalt"]').click();
+    expect(await getAccent()).toBe('#2563eb');
   });
 
   test('panel closes when Tweaks button is clicked again', async ({ page }) => {
-    await page.locator('.sidebar button.nav-item', { hasText: 'Tweaks' }).click();
+    await page.getByRole('button', { name: 'Tweaks' }).click();
     await expect(page.locator('.tweaks-panel')).not.toBeVisible();
   });
 

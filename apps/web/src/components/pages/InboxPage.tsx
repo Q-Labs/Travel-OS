@@ -4,8 +4,8 @@ import { INBOX_DOMAIN, INBOX_MAILBOX } from '../../lib/inboxAddress';
 import { useApp } from '../../app/AppContext';
 import { SourceChip } from '../atoms/SourceChip';
 import { EmptyState } from '../molecules/EmptyState';
-import { MetricTile } from '../molecules/MetricTile';
 import { InboxRow } from '../organisms/InboxRow';
+import { Button, MetricCard } from '@q-labs/cobalt';
 
 export function InboxPage() {
   const { trips, inbox, assignInboxItem, dismissInboxItem, inboxToken } = useApp();
@@ -35,28 +35,28 @@ export function InboxPage() {
   return (
     <div className="inbox-view">
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, margin: '8px 0 24px' }}>
-        <MetricTile label="In the inbox" value={inbox.length} hint="awaiting attach or review" />
-        <MetricTile
+        <MetricCard label="In the inbox" value={String(inbox.length)} delta="awaiting attach or review" />
+        <MetricCard
           label="Parsed"
-          value={inbox.filter((i) => i.status === 'parsed').length}
-          hint="auto-matched to a trip"
+          value={String(inbox.filter((i) => i.status === 'parsed').length)}
+          delta="auto-matched to a trip"
         />
-        <MetricTile
+        <MetricCard
           label="Parsing now"
-          value={inbox.filter((i) => i.status === 'parsing').length}
-          hint="running through the LLM"
+          value={String(inbox.filter((i) => i.status === 'parsing').length)}
+          delta="running through the LLM"
         />
-        <MetricTile
+        <MetricCard
           label="Needs review"
-          value={inbox.filter((i) => i.status === 'needs_review' || i.status === 'pending_trip').length}
-          hint="ambiguous or duplicate"
+          value={String(inbox.filter((i) => i.status === 'needs_review' || i.status === 'pending_trip').length)}
+          delta="ambiguous or duplicate"
         />
       </div>
 
       <div className="forward-card">
         <div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, letterSpacing: '-0.01em' }}>
-            Forward anything to <em style={{ fontStyle: 'italic' }}>{forwardAddress ?? 'your forwarding address'}</em>
+            Forward anything to <em style={{ fontStyle: 'normal' }}>{forwardAddress ?? 'your forwarding address'}</em>
           </div>
           <div style={{ fontSize: 13, color: 'var(--ink-3)', marginTop: 4, lineHeight: 1.5 }}>
             Hotel confirms, Viator receipts, OpenTable reservations, flight emails — anything.
@@ -67,13 +67,12 @@ export function InboxPage() {
             <SourceChip source="extension" count={sourceCounts.extension ?? 0} />
           </div>
         </div>
-        <button
-          className="btn"
+        <Button variant="ghost"
           disabled={!forwardAddress}
           onClick={forwardAddress ? () => void copyAddress(forwardAddress) : undefined}
         >
           {addressCopied ? 'Copied' : 'Copy address'}
-        </button>
+        </Button>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 24 }}>

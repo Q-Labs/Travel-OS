@@ -1,4 +1,4 @@
-import { MiniProgress } from '../atoms/MiniProgress';
+import { ProgressMini } from '@q-labs/cobalt';
 
 export function ProgressRow({ label, value, progress }: { label: string; value: string; progress: number }) {
   return (
@@ -7,7 +7,7 @@ export function ProgressRow({ label, value, progress }: { label: string; value: 
         <strong>{label}</strong>
         <span>{value}</span>
       </div>
-      <MiniProgress value={progress} />
+      <ProgressMini value={progress} />
     </div>
   );
 }

@@ -7,7 +7,6 @@ import type { PackingCategory, Trip, TripDetail } from '../../lib/types';
 import type { useApp } from '../../app/AppContext';
 import { CatPip } from '../atoms/CatPip';
 import { Icon } from '../atoms/Icon';
-import { MiniProgress } from '../atoms/MiniProgress';
 import { DestinationBlurb } from '../molecules/DestinationBlurb';
 import { BudgetConversion } from '../molecules/BudgetConversion';
 import { DocumentCard } from '../molecules/DocumentCard';
@@ -15,6 +14,7 @@ import { ProgressRow } from '../molecules/ProgressRow';
 import { TripStat } from '../molecules/TripStat';
 import { BookingsPanel } from './BookingsPanel';
 import { SplitBudget } from './SplitBudget';
+import { Button, ProgressMini } from '@q-labs/cobalt';
 
 type TripDetailTab = 'overview' | 'itinerary' | 'bookings' | 'budget' | 'packing' | 'documents' | 'notes';
 
@@ -182,15 +182,15 @@ export function TripDetailContent({
                 <h3>Quick actions</h3>
               </div>
               <div className="trip-quick-actions">
-                <button className="btn ghost" onClick={() => setTab('bookings')}>
+                <Button variant="ghost"  onClick={() => setTab('bookings')}>
                   <Icon.Plus /> Review bookings
-                </button>
-                <button className="btn ghost" onClick={() => setTab('packing')}>
+                </Button>
+                <Button variant="ghost"  onClick={() => setTab('packing')}>
                   <Icon.Check /> Update packing
-                </button>
-                <button className="btn ghost" onClick={() => setTab('documents')}>
+                </Button>
+                <Button variant="ghost"  onClick={() => setTab('documents')}>
                   <Icon.Notes /> Check documents
-                </button>
+                </Button>
               </div>
             </aside>
           </div>
@@ -230,7 +230,7 @@ export function TripDetailContent({
                     ) : (
                       <div className="trip-empty-inline">
                         <p>No activities planned yet.</p>
-                        <button className="btn ghost">Add activity</button>
+                        <Button variant="ghost" >Add activity</Button>
                       </div>
                     )}
                   </div>
@@ -276,7 +276,7 @@ export function TripDetailContent({
                           <span>{row.category}</span>
                           <strong>{fmtMoneyIn(row.spent, trip.budget_currency)} / {fmtMoneyIn(row.total, trip.budget_currency)}</strong>
                         </div>
-                        <MiniProgress value={rowPct} />
+                        <ProgressMini value={rowPct} />
                       </div>
                     );
                   })}
@@ -295,7 +295,7 @@ export function TripDetailContent({
                 <p>{packedCount} of {detail.packing.length} items packed.</p>
               </div>
               <div className="packing-progress">
-                <MiniProgress value={packingPct} />
+                <ProgressMini value={packingPct} />
               </div>
             </div>
             <div className="packing-grid">

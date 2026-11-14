@@ -17,16 +17,24 @@ import {
 } from '../lib/db';
 import type { InboxItem, Insight, Trip, TripDetail, TripStage } from '../lib/types';
 
-type AccentKey = 'orange' | 'olive' | 'blue' | 'plum' | 'sand';
+type AccentKey = 'cobalt' | 'emerald' | 'violet' | 'rust';
 type DensityKey = 'compact' | 'normal' | 'roomy';
 
-const ACCENTS: Record<AccentKey, { val: string; soft: string; ink: string }> = {
-  orange: { val: 'oklch(62% 0.15 50)',  soft: 'oklch(92% 0.04 60)',  ink: 'oklch(35% 0.1 50)'  },
-  olive:  { val: 'oklch(55% 0.1 130)',  soft: 'oklch(92% 0.03 130)', ink: 'oklch(32% 0.08 130)' },
-  blue:   { val: 'oklch(55% 0.12 250)', soft: 'oklch(92% 0.04 250)', ink: 'oklch(32% 0.1 250)'  },
-  plum:   { val: 'oklch(55% 0.12 330)', soft: 'oklch(92% 0.04 330)', ink: 'oklch(32% 0.1 330)'  },
-  sand:   { val: 'oklch(55% 0.05 60)',  soft: 'oklch(92% 0.02 60)',  ink: 'oklch(32% 0.04 60)'  },
+// Cobalt's own accent is the default and is left untouched; the alternates
+// override the same semantic tokens Cobalt's components already read.
+const ACCENTS: Record<Exclude<AccentKey, 'cobalt'>, string> = {
+  emerald: '#1F8A5B',
+  violet:  '#7A5AE0',
+  rust:    '#C2410C',
 };
+
+const ACCENT_TOKENS = (c: string): Record<string, string> => ({
+  '--accent-default': c,
+  '--accent-hover':   `color-mix(in oklab, ${c} 78%, white)`,
+  '--accent-pressed': `color-mix(in oklab, ${c} 80%, black)`,
+  '--accent-subtle':  `color-mix(in oklab, ${c} 14%, transparent)`,
+  '--accent-glow':    `color-mix(in oklab, ${c} 26%, transparent)`,
+});
 
 type AppState = {
   trips: Trip[];
@@ -76,8 +84,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [inbox, setInbox] = useState<InboxItem[]>(INBOX);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [accent, setAccent] = useState<AccentKey>('orange');
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [accent, setAccent] = useState<AccentKey>('cobalt');
   const [density, setDensity] = useState<DensityKey>('normal');
   const [showInsights, setShowInsights] = useState(true);
   const [tweaksOpen, setTweaksOpen] = useState(false);
@@ -88,10 +96,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => { document.documentElement.setAttribute('data-theme', theme); }, [theme]);
   useEffect(() => {
-    const a = ACCENTS[accent];
-    document.documentElement.style.setProperty('--accent', a.val);
-    document.documentElement.style.setProperty('--accent-soft', a.soft);
-    document.documentElement.style.setProperty('--accent-ink', a.ink);
+    const root = document.documentElement.style;
+    const tokens = ACCENT_TOKENS(accent === 'cobalt' ? '' : ACCENTS[accent]);
+    Object.entries(tokens).forEach(([name, value]) => {
+      if (accent === 'cobalt') root.removeProperty(name);
+      else root.setProperty(name, value);
+    });
   }, [accent]);
   useEffect(() => {
     const m: Record<DensityKey, string> = { compact: '0.88', normal: '1', roomy: '1.15' };

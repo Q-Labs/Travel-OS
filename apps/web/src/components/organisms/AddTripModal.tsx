@@ -6,6 +6,7 @@ import { CATEGORIES } from '../../lib/utils';
 import { geocode } from '../../lib/clients/openMeteo';
 import { HOME_CURRENCY } from '../../lib/currency';
 import { Icon } from '../atoms/Icon';
+import { Button, Input } from '@q-labs/cobalt';
 
 type FormData = {
   destination: string;
@@ -143,7 +144,7 @@ export function AddTripModal() {
             <>
               <div className="field">
                 <label htmlFor="atm-destination">Destination</label>
-                <input
+                <Input
                   id="atm-destination"
                   autoFocus
                   value={data.destination}
@@ -157,7 +158,7 @@ export function AddTripModal() {
                   <label htmlFor="atm-region">
                     Region / venue{lookingUp && <em className="atm-hint"> · looking up…</em>}
                   </label>
-                  <input
+                  <Input
                     id="atm-region"
                     value={data.region}
                     onChange={(e) => setData((d) => ({ ...d, region: e.target.value }))}
@@ -166,7 +167,7 @@ export function AddTripModal() {
                 </div>
                 <div className="field">
                   <label htmlFor="atm-country">Country</label>
-                  <input
+                  <Input
                     id="atm-country"
                     value={data.country}
                     onChange={(e) => setData((d) => ({ ...d, country: e.target.value }))}
@@ -176,7 +177,7 @@ export function AddTripModal() {
               </div>
               <div className="field">
                 <label htmlFor="atm-date">When?</label>
-                <input
+                <Input
                   id="atm-date"
                   value={data.date_approx}
                   onChange={(e) => setData((d) => ({ ...d, date_approx: e.target.value }))}
@@ -225,7 +226,7 @@ export function AddTripModal() {
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 14 }}>
                 <div className="field">
                   <label htmlFor="atm-budget">Rough budget</label>
-                  <input
+                  <Input
                     id="atm-budget"
                     type="number"
                     value={data.budget_total}
@@ -248,7 +249,7 @@ export function AddTripModal() {
               </div>
               <div style={{ background: 'var(--bg-sunken)', padding: 16, borderRadius: 10, fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.6 }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, marginBottom: 4 }}>
-                  Great — we'll drop <em style={{ fontStyle: 'italic' }}>{/* v8 ignore next */ data.destination || 'this trip'}</em> into Dreaming.
+                  Great — we'll drop <em style={{ fontStyle: 'normal' }}>{/* v8 ignore next */ data.destination || 'this trip'}</em> into Dreaming.
                 </div>
                 Add flights, lodging, itinerary later as things firm up. No rush.
               </div>
@@ -257,16 +258,15 @@ export function AddTripModal() {
         </div>
 
         <div className="modal-foot">
-          <button className="btn ghost" onClick={step === 0 ? close : () => setStep((s) => s - 1)}>
+          <Button variant="ghost"  onClick={step === 0 ? close : () => setStep((s) => s - 1)}>
             {step === 0 ? 'Cancel' : '← Back'}
-          </button>
-          <button
-            className="btn primary"
+          </Button>
+          <Button variant="primary"
             disabled={!canProceed()}
             onClick={() => (step < 2 ? setStep((s) => s + 1) : submit())}
           >
             {step < 2 ? 'Next →' : 'Add trip'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

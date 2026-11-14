@@ -3,7 +3,7 @@ import { useApp } from '../../app/AppContext';
 import { TODAY } from '../../lib/data';
 import { daysBetween } from '../../lib/utils';
 import type { Trip } from '../../lib/types';
-import { AppShell } from '../templates/AppShell';
+import { DashboardLayout } from '@q-labs/cobalt';
 import { AddTripModal } from '../organisms/AddTripModal';
 import { IntegrationsModal } from '../organisms/IntegrationsModal';
 import { Sidebar } from '../organisms/Sidebar';
@@ -47,18 +47,16 @@ export function AppLayout() {
   const topbar = topbarContent[segment];
 
   return (
-    <AppShell
-      sidebar={<Sidebar />}
-      topbar={topbar && <Topbar title={topbar.title} subtitle={topbar.subtitle} />}
-      overlays={
-        <>
-          {showModal && <AddTripModal />}
-          {showIntegrations && <IntegrationsModal />}
-          {tweaksOpen && <TweaksPanel />}
-        </>
-      }
-    >
-      <Outlet context={{ trips } satisfies OutletCtx} />
-    </AppShell>
+    <>
+      <DashboardLayout
+        sidebar={<Sidebar />}
+        topbar={topbar ? <Topbar title={topbar.title} subtitle={topbar.subtitle} /> : null}
+      >
+        <Outlet context={{ trips } satisfies OutletCtx} />
+      </DashboardLayout>
+      {showModal && <AddTripModal />}
+      {showIntegrations && <IntegrationsModal />}
+      {tweaksOpen && <TweaksPanel />}
+    </>
   );
 }

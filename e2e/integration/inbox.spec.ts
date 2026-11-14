@@ -23,8 +23,9 @@ test.describe('Inbox dashboard', () => {
   test('inbox count in sidebar matches rendered items', async ({ page }) => {
     const rows = page.locator('.inbox-row');
     const rowCount = await rows.count();
-    const sidebarCount = page.locator('.nav-item').filter({ hasText: /Inbox/ }).locator('.count');
-    await expect(sidebarCount).toHaveText(String(rowCount));
+    // the Inbox link carries its count as a badge: "Inbox 6"
+    const inboxLink = page.getByRole('link', { name: /^Inbox/ });
+    await expect(inboxLink).toContainText(String(rowCount));
   });
 
   test('inbox subtitle shows correct item count', async ({ page }) => {

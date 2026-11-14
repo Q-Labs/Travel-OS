@@ -1,14 +1,13 @@
 import { useApp } from '../../app/AppContext';
 import { Icon } from '../atoms/Icon';
 
-type AccentKey = 'orange' | 'olive' | 'blue' | 'plum' | 'sand';
+type AccentKey = 'cobalt' | 'emerald' | 'violet' | 'rust';
 
 const ACCENTS: { key: AccentKey; val: string; label: string }[] = [
-  { key: 'orange', val: 'oklch(62% 0.15 50)', label: 'Clay' },
-  { key: 'olive', val: 'oklch(55% 0.1 130)', label: 'Olive' },
-  { key: 'blue', val: 'oklch(55% 0.12 250)', label: 'Ink' },
-  { key: 'plum', val: 'oklch(55% 0.12 330)', label: 'Plum' },
-  { key: 'sand', val: 'oklch(60% 0.04 60)', label: 'Sand' },
+  { key: 'cobalt', val: '#2563EB', label: 'Cobalt' },
+  { key: 'emerald', val: '#1F8A5B', label: 'Emerald' },
+  { key: 'violet', val: '#7A5AE0', label: 'Violet' },
+  { key: 'rust', val: '#C2410C', label: 'Rust' },
 ];
 
 export function TweaksPanel() {
@@ -19,7 +18,7 @@ export function TweaksPanel() {
   return (
     <div className="tweaks-panel">
       <div className="tweaks-head">
-        Tweaks <em style={{ fontStyle: 'italic', color: 'var(--ink-3)' }}>· preview</em>
+        Tweaks <em style={{ fontStyle: 'normal', color: 'var(--ink-3)' }}>· preview</em>
         <button className="icon-btn" aria-label="Close" onClick={close}><Icon.Close /></button>
       </div>
       <div className="tweaks-body">

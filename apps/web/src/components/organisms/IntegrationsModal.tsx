@@ -3,6 +3,7 @@ import { useApp } from '../../app/AppContext';
 import { INTEGRATIONS } from '../../lib/data';
 import { INBOX_DOMAIN, INBOX_MAILBOX } from '../../lib/inboxAddress';
 import { Icon } from '../atoms/Icon';
+import { Button } from '@q-labs/cobalt';
 
 export function IntegrationsModal() {
   const { setShowIntegrations, inboxToken } = useApp();
@@ -81,14 +82,12 @@ export function IntegrationsModal() {
                       </div>
                     )}
                   </div>
-                  <button
-                    className="btn"
-                    style={{ padding: '6px 12px' }}
+                  <Button variant="ghost" size="sm"
                     disabled={!canAct}
                     onClick={canAct ? () => setShowFeed((v) => !v) : undefined}
                   >
                     {status === 'active' ? 'Manage' : 'Connect'}
-                  </button>
+                  </Button>
                 </div>
                 {isCalendar && showFeed && feedUrl && (
                   <div className="integ-feed">
@@ -97,9 +96,9 @@ export function IntegrationsModal() {
                     </div>
                     <div className="integ-feed-row">
                       <code>{feedUrl}</code>
-                      <button className="btn" onClick={() => void copyFeed(feedUrl)}>
+                      <Button variant="ghost"  onClick={() => void copyFeed(feedUrl)}>
                         {copied ? 'Copied' : copyFailed ? 'Copy failed' : 'Copy'}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -109,7 +108,7 @@ export function IntegrationsModal() {
         </div>
         <div className="modal-foot">
           <span style={{ fontSize: 12, color: 'var(--ink-3)' }}>Everything here is read-only or email-based. Your inbox stays yours.</span>
-          <button className="btn primary" onClick={close}>Done</button>
+          <Button variant="primary"  onClick={close}>Done</Button>
         </div>
       </div>
     </div>

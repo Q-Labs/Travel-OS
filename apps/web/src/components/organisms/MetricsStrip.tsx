@@ -2,7 +2,7 @@ import { HOME_CURRENCY, fmtMoneyIn, sumInCurrency } from '../../lib/currency';
 import { TODAY } from '../../lib/data';
 import { daysBetween, fmtDate } from '../../lib/utils';
 import type { Trip } from '../../lib/types';
-import { MetricTile } from '../molecules/MetricTile';
+import { MetricCard } from '@q-labs/cobalt';
 
 export function MetricsStrip({ trips }: { trips: Trip[] }) {
   const upcoming = trips
@@ -26,38 +26,23 @@ export function MetricsStrip({ trips }: { trips: Trip[] }) {
   const ytdPct = Math.min(100, (ytdSpend / annualBudget) * 100);
   const totalTrips = trips.filter((t) => t.stage !== 'archived').length;
 
+  const dreaming = trips.filter((t) => t.stage === 'dreaming').length;
+  const archived = trips.filter((t) => t.stage === 'archived').length;
+
   return (
     <div className="metrics">
-      <MetricTile
-        pop
+      <MetricCard
         label="Next trip"
-        value={next ? <>{nextDays}<span className="suffix">{nextDays === 1 ? 'day' : 'days'}</span></> : <em>—</em>}
-        hint={next ? <>{next.destination} · {fmtDate(next.start_date)}</> : 'nothing booked'}
+        value={next ? `${nextDays} ${nextDays === 1 ? 'day' : 'days'}` : '—'}
+        delta={next ? `${next.destination} · ${fmtDate(next.start_date)}` : 'nothing booked'}
       />
-      <MetricTile label="Active plans" value={active} hint="across Planning, Booked, Upcoming" />
-      <MetricTile
-        label={`${year} spend`}
-        value={<>{fmtMoneyIn(ytdSpend, HOME_CURRENCY)}<span className="suffix">/ {fmtMoneyIn(annualBudget, HOME_CURRENCY)}</span></>}
-        hintStyle={{ marginTop: 8 }}
-        hint={
-          <>
-            <div style={{ height: 4, background: 'var(--bg-sunken)', borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{ width: ytdPct + '%', height: '100%', background: 'var(--accent)' }} />
-            </div>
-            <div style={{ marginTop: 4 }}>{ytdPct.toFixed(0)}% of annual</div>
-          </>
-        }
+      <MetricCard label="Active plans" value={String(active)} delta="across Planning, Booked, Upcoming" />
+      <MetricCard
+        label={`${year} spend of ${fmtMoneyIn(annualBudget, HOME_CURRENCY)}`}
+        value={fmtMoneyIn(ytdSpend, HOME_CURRENCY)}
+        delta={`${ytdPct.toFixed(0)}% of annual`}
       />
-      <MetricTile
-        label="Trips in motion"
-        value={totalTrips}
-        hint={
-          <>
-            {trips.filter((t) => t.stage === 'dreaming').length} dreaming ·{' '}
-            {trips.filter((t) => t.stage === 'archived').length} archived
-          </>
-        }
-      />
+      <MetricCard label="Trips in motion" value={String(totalTrips)} delta={`${dreaming} dreaming · ${archived} archived`} />
     </div>
   );
 }

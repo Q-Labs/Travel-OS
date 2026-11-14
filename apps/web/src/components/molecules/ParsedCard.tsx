@@ -22,7 +22,7 @@ export function ParsedCard({ parsed }: { parsed: ParsedInbox }) {
         )}
       </div>
       {parsed.note && (
-        <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 4, fontStyle: 'italic' }}>
+        <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 4, fontStyle: 'normal' }}>
           {parsed.note}
         </div>
       )}

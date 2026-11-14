@@ -3,6 +3,7 @@ import { VendorMark } from '../atoms/VendorMark';
 import { SourceChip } from '../atoms/SourceChip';
 import { ParsedCard } from '../molecules/ParsedCard';
 import type { InboxItem } from '../../lib/types';
+import { Button } from '@q-labs/cobalt';
 
 export function InboxRow({
   item,
@@ -60,23 +61,21 @@ export function InboxRow({
               {suggestedTrip.destination}
             </button>
             <div style={{ display: 'flex', gap: 6 }}>
-              <button
-                className="btn primary"
-                style={{ padding: '6px 12px' }}
+              <Button variant="primary" size="sm"
                 onClick={handleAssign}
                 disabled={item.status === 'parsing'}
               >
                 Attach
-              </button>
-              <button className="btn" style={{ padding: '6px 12px' }} onClick={handleDismiss}>
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleDismiss}>
                 Dismiss
-              </button>
+              </Button>
             </div>
           </>
         ) : (
           <div style={{ display: 'flex', gap: 6 }}>
-            <button className="btn primary" style={{ padding: '6px 12px' }} disabled>Pick trip…</button>
-            <button className="btn" style={{ padding: '6px 12px' }} onClick={handleDismiss}>Dismiss</button>
+            <Button variant="primary" size="sm" disabled>Pick trip…</Button>
+            <Button variant="ghost" size="sm" onClick={handleDismiss}>Dismiss</Button>
           </div>
         )}
       </div>

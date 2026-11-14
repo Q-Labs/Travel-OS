@@ -1,4 +1,4 @@
-import { MiniProgress } from '../atoms/MiniProgress';
+import { ProgressMini } from '@q-labs/cobalt';
 
 export function TripStat({
   label,
@@ -16,7 +16,7 @@ export function TripStat({
       <span>{label}</span>
       <strong>{value}</strong>
       {subvalue && <small>{subvalue}</small>}
-      {progress !== undefined && <MiniProgress value={progress} />}
+      {progress !== undefined && <ProgressMini value={progress} />}
     </div>
   );
 }
