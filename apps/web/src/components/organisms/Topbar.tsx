@@ -8,6 +8,7 @@ export function Topbar({ title, subtitle }: { title: string; subtitle: string })
     <CobaltTopbar
       title={title}
       meta={subtitle}
+      titleAs="h1"
       actions={
         <>
           <div className="search">

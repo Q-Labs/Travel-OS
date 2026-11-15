@@ -95,6 +95,18 @@ describe('route components', () => {
     expect(await screen.findByText('Lifetime trips')).toBeInTheDocument();
   });
 
+  it.each([
+    ['/app/pipeline', /, Quincy\.$/],
+    ['/app/inbox', /^Inbox\.$/],
+    ['/app/calendar', /^Calendar\.$/],
+    ['/app/archive', /^Archive\.$/],
+  ])('gives %s one page heading (h1) carrying its title', async (path, name) => {
+    const { unmount } = renderAt(path);
+    expect(await screen.findByRole('heading', { level: 1, name })).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    unmount();
+  });
+
   it('sidebar and topbar interactions work', async () => {
     renderAt('/app/pipeline');
     await screen.findByText('Travel OS');
