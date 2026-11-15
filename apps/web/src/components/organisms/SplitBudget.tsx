@@ -3,7 +3,7 @@ import { fmtMoneyIn } from '../../lib/currency';
 import { TRAVELERS } from '../../lib/data';
 import type { Trip, TripSplit } from '../../lib/types';
 import { Icon } from '../atoms/Icon';
-import { Button } from '@q-labs/cobalt';
+import { Avatar, Button } from '@q-labs/cobalt';
 
 type SettleRow = { fromId: string; toId: string; amount: number };
 
@@ -46,9 +46,8 @@ export function SplitBudget({ splits, trip }: { splits: TripSplit[] | undefined;
   }
 
   const settle = computeSettle(splits).filter((r) => !dismissed.has(`${r.fromId}-${r.toId}`));
-  /* v8 ignore next 2 -- defensive fallback: traveler IDs in fixture data always exist in TRAVELERS */
+  /* v8 ignore next -- defensive fallback: traveler IDs in fixture data always exist in TRAVELERS */
   const getName = (id: string) => travelers.find((t) => t.id === id)?.name ?? id;
-  const getInitials = (id: string) => travelers.find((t) => t.id === id)?.initials ?? id[0].toUpperCase();
 
   return (
     <div className="split-section">
@@ -67,12 +66,11 @@ export function SplitBudget({ splits, trip }: { splits: TripSplit[] | undefined;
           const maxBar = s.share * 1.5 || 1;
           const paidPct = Math.min(100, (s.paid / maxBar) * 100);
           const sharePct = Math.min(100, (s.share / maxBar) * 100);
-          /* v8 ignore next 2 -- fallback display values; travelerId always maps to a known traveler */
-          const displayInitials = traveler?.initials ?? '?';
+          /* v8 ignore next -- fallback display value; travelerId always maps to a known traveler */
           const displayName = traveler?.name ?? s.travelerId;
           return (
             <div key={s.travelerId} className="split-card">
-              <div className="split-avatar">{displayInitials}</div>
+              <Avatar name={displayName} size="md" />
               <div className="split-info">
                 <div className="split-name">{displayName}</div>
                 <div className="split-amounts">Paid {fmtMoneyIn(s.paid, trip.budget_currency)} · share {fmtMoneyIn(s.share, trip.budget_currency)}</div>
@@ -102,9 +100,9 @@ export function SplitBudget({ splits, trip }: { splits: TripSplit[] | undefined;
           {settle.map((row) => (
             <div key={`${row.fromId}-${row.toId}`} className="settle-row">
               <div className="settle-avatars">
-                <span className="settle-av settle-av-from">{getInitials(row.fromId)}</span>
+                <Avatar name={getName(row.fromId)} size="sm" className="settle-from" />
                 <span className="settle-connector">owes</span>
-                <span className="settle-av settle-av-to">{getInitials(row.toId)}</span>
+                <Avatar name={getName(row.toId)} size="sm" className="settle-to" />
                 <span className="settle-names">{getName(row.fromId)} → {getName(row.toId)}</span>
               </div>
               <div className="settle-amount">{fmtMoneyIn(row.amount, trip.budget_currency)}</div>

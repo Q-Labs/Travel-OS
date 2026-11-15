@@ -25,7 +25,9 @@ describe('Cobalt design system usage', () => {
     ['Button', /className=(\{`|")btn[ "`]/],
     ['Input', /<input\b/],
     ['ProgressMini', /className="mini-progress"/],
-    ['Avatar', /className="(av|avatar)"/],
+    // any class token that is, or ends in, "av" / "avatar" (e.g. split-avatar, settle-av);
+    // containers such as tcard-avatars are fine
+    ['Avatar', /className="(?:[^"]* )?(?:[\w-]*-)?(?:av|avatar)[ "]/],
     ['NavItem', /className=\{?[^>]*nav-item/],
     ['Sidebar', /<aside className="sidebar"/],
     ['Topbar', /className="topbar"/],

@@ -26,17 +26,18 @@ test.describe('TweaksPanel', () => {
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });
 
-  test('changing the accent overrides Cobalt\'s accent token and cobalt restores it', async ({ page }) => {
-    const getAccent = () =>
-      page.evaluate(() =>
-        getComputedStyle(document.documentElement).getPropertyValue('--accent-default').trim().toLowerCase()
-      );
+  test('changing the accent recolours what the user sees, and cobalt restores it', async ({ page }) => {
+    // Read a real Cobalt button inside the app, not a variable on <html>: the
+    // override only counts if it reaches the components.
+    const newTrip = page.getByRole('button', { name: /New trip/ });
+    const background = () => newTrip.evaluate((el) => getComputedStyle(el).backgroundColor);
 
-    expect(await getAccent()).toBe('#2563eb');
+    // Cobalt's Button animates its background (120ms), so wait for it to settle.
+    await expect.poll(background).toBe('rgb(37, 99, 235)'); // Cobalt #2563EB
     await page.locator('button[title="Emerald"]').click();
-    expect(await getAccent()).toBe('#1f8a5b');
+    await expect.poll(background).toBe('rgb(31, 138, 91)'); // #1F8A5B
     await page.locator('button[title="Cobalt"]').click();
-    expect(await getAccent()).toBe('#2563eb');
+    await expect.poll(background).toBe('rgb(37, 99, 235)');
   });
 
   test('panel closes when Tweaks button is clicked again', async ({ page }) => {

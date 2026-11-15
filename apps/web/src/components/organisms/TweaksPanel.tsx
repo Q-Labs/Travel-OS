@@ -1,14 +1,6 @@
 import { useApp } from '../../app/AppContext';
+import { ACCENTS } from '../../lib/accents';
 import { Icon } from '../atoms/Icon';
-
-type AccentKey = 'cobalt' | 'emerald' | 'violet' | 'rust';
-
-const ACCENTS: { key: AccentKey; val: string; label: string }[] = [
-  { key: 'cobalt', val: '#2563EB', label: 'Cobalt' },
-  { key: 'emerald', val: '#1F8A5B', label: 'Emerald' },
-  { key: 'violet', val: '#7A5AE0', label: 'Violet' },
-  { key: 'rust', val: '#C2410C', label: 'Rust' },
-];
 
 export function TweaksPanel() {
   const { theme, setTheme, accent, setAccent, density, setDensity, setTweaksOpen } = useApp();
@@ -43,7 +35,7 @@ export function TweaksPanel() {
               <button
                 key={a.key}
                 className={`sw${accent === a.key ? ' on' : ''}`}
-                style={{ background: a.val }}
+                style={{ background: a.swatch }}
                 title={a.label}
                 onClick={() => setAccent(a.key)}
               />

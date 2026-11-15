@@ -15,26 +15,10 @@ import {
   upsertTrip,
   upsertTripDetail,
 } from '../lib/db';
+import type { AccentKey } from '../lib/accents';
 import type { InboxItem, Insight, Trip, TripDetail, TripStage } from '../lib/types';
 
-type AccentKey = 'cobalt' | 'emerald' | 'violet' | 'rust';
 type DensityKey = 'compact' | 'normal' | 'roomy';
-
-// Cobalt's own accent is the default and is left untouched; the alternates
-// override the same semantic tokens Cobalt's components already read.
-const ACCENTS: Record<Exclude<AccentKey, 'cobalt'>, string> = {
-  emerald: '#1F8A5B',
-  violet:  '#7A5AE0',
-  rust:    '#C2410C',
-};
-
-const ACCENT_TOKENS = (c: string): Record<string, string> => ({
-  '--accent-default': c,
-  '--accent-hover':   `color-mix(in oklab, ${c} 78%, white)`,
-  '--accent-pressed': `color-mix(in oklab, ${c} 80%, black)`,
-  '--accent-subtle':  `color-mix(in oklab, ${c} 14%, transparent)`,
-  '--accent-glow':    `color-mix(in oklab, ${c} 26%, transparent)`,
-});
 
 type AppState = {
   trips: Trip[];
@@ -95,14 +79,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [inboxToken, setInboxToken] = useState<string | null>(null);
 
   useEffect(() => { document.documentElement.setAttribute('data-theme', theme); }, [theme]);
-  useEffect(() => {
-    const root = document.documentElement.style;
-    const tokens = ACCENT_TOKENS(accent === 'cobalt' ? '' : ACCENTS[accent]);
-    Object.entries(tokens).forEach(([name, value]) => {
-      if (accent === 'cobalt') root.removeProperty(name);
-      else root.setProperty(name, value);
-    });
-  }, [accent]);
   useEffect(() => {
     const m: Record<DensityKey, string> = { compact: '0.88', normal: '1', roomy: '1.15' };
     document.documentElement.style.fontSize = `${14 * Number(m[density])}px`;

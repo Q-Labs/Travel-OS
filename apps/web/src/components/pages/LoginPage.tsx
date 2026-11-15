@@ -22,37 +22,54 @@ export function LoginPage() {
   const [mode, setMode] = useState<LoginMode>('magic');
   const [password, setPassword] = useState('');
   const [step, setStep] = useState<LoginStep>('form');
-  const [loading, setLoading] = useState(false);
+  // Which sign-in action is in flight. While one runs, every sign-in control is
+  // disabled, so two flows (e.g. Google then Apple) can never race.
+  const [pending, setPending] = useState<'submit' | 'google' | 'apple' | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
   const fail = (message: string) => {
     setErrorMessage(message);
     setStep('error');
-    setLoading(false);
+    setPending(null);
   };
+
+  // A Supabase call can also throw (network, misconfiguration) rather than
+  // return { error }; both end in the same alert so the form is never stuck.
+  const failFrom = (err: unknown) => fail(err instanceof Error ? err.message : 'Something went wrong. Try again.');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    if (mode === 'password') {
-      const { error } = await signInWithPassword(email.trim(), password);
+    setPending('submit');
+    try {
+      if (mode === 'password') {
+        const { error } = await signInWithPassword(email.trim(), password);
+        if (error) return fail(error.message);
+        navigate('/app/pipeline');
+        return;
+      }
+      const { error } = await signInWithMagicLink(email.trim());
       if (error) return fail(error.message);
-      navigate('/app/pipeline');
-      return;
+      setPending(null);
+      setStep('sent');
+    } catch (err) {
+      failFrom(err);
     }
-    const { error } = await signInWithMagicLink(email.trim());
-    if (error) return fail(error.message);
-    setLoading(false);
-    setStep('sent');
   };
 
   // On success the browser leaves for the provider, so only a failure to start
   // the flow comes back here.
   const handleSocial = async (provider: 'google' | 'apple') => {
-    setLoading(true);
-    const { error } = await signInWithOAuth(provider);
-    if (error) fail(error.message);
+    setPending(provider);
+    try {
+      const { error } = await signInWithOAuth(provider);
+      if (error) fail(error.message);
+    } catch (err) {
+      failFrom(err);
+    }
   };
+
+  const busy = pending !== null;
+  const canSubmit = email.trim() !== '' && (mode === 'magic' || password !== '');
 
   return (
     <AuthLayout
@@ -102,7 +119,7 @@ export function LoginPage() {
           <p className="login-sub">Sign in to your travel dashboard</p>
 
           <div className="login-social">
-            <button type="button" className="login-social-btn" onClick={() => void handleSocial('google')}>
+            <button type="button" className="login-social-btn" disabled={busy} onClick={() => void handleSocial('google')}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
                 <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
                 <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
@@ -111,7 +128,7 @@ export function LoginPage() {
               </svg>
               Continue with Google
             </button>
-            <button type="button" className="login-social-btn" onClick={() => void handleSocial('apple')}>
+            <button type="button" className="login-social-btn" disabled={busy} onClick={() => void handleSocial('apple')}>
               <svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true">
                 <path d="M12.5 0c.07.8-.22 1.6-.7 2.2-.5.63-1.26 1.1-2.04 1.05-.1-.82.25-1.67.73-2.25C11 .42 11.8-.02 12.5 0zM15.9 12.1c-.5 1.1-1.07 2.17-1.77 3.03-.7.87-1.37 1.6-2.32 1.62-.93.03-1.24-.56-2.32-.56-1.07 0-1.4.54-2.28.59-.93.05-1.68-.76-2.38-1.62C3.48 13.4 2.5 11.03 2.5 8.75c0-3.1 2.02-4.74 4.02-4.77 1.01-.02 1.97.68 2.58.68.62 0 1.78-.84 3-.72.51.02 1.94.21 2.86 1.57-.07.05-1.71.99-1.69 2.97.02 2.35 2.06 3.13 2.08 3.14l-.45 1.48z"/>
               </svg>
@@ -161,6 +178,7 @@ export function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  required
                 />
               </div>
             )}
@@ -173,9 +191,9 @@ export function LoginPage() {
 
             <Button variant="primary" className="login-submit"
               type="submit"
-              disabled={!email.trim() || loading}
+              disabled={!canSubmit || busy}
             >
-              {loading ? (
+              {pending === 'submit' ? (
                 <span className="login-loading">
                   <span className="parse-dot" />
                   {mode === 'magic' ? 'Sending link…' : 'Signing in…'}

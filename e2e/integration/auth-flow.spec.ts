@@ -19,11 +19,14 @@ test.describe('Login page', () => {
     await expect(page.getByRole('button', { name: /^Sign in$/ })).toBeVisible();
   });
 
-  test('submit button is disabled without an email', async ({ page }) => {
+  test('submit button is disabled without an email and, in password mode, a password', async ({ page }) => {
     await page.goto('/login');
     await page.getByRole('button', { name: 'Password' }).click();
     await expect(page.getByRole('button', { name: /^Sign in$/ })).toBeDisabled();
     await page.getByLabel('Email address').fill('test@example.com');
+    // a password is required too
+    await expect(page.getByRole('button', { name: /^Sign in$/ })).toBeDisabled();
+    await page.getByLabel('Password').fill('hunter2');
     await expect(page.getByRole('button', { name: /^Sign in$/ })).toBeEnabled();
   });
 

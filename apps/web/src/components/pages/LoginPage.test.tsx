@@ -167,6 +167,54 @@ describe('LoginPage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('provider is not enabled');
   });
 
+  it('locks every sign-in control while a social flow starts, so two flows cannot race', async () => {
+    mockOAuth.mockReturnValue(new Promise(() => {}));
+    renderLogin();
+    fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'user@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with Google' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Continue with Apple' })).toBeDisabled());
+    expect(screen.getByRole('button', { name: 'Continue with Google' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with Apple' }));
+    expect(mockOAuth).toHaveBeenCalledTimes(1);
+    // the email button is disabled but does not claim to be sending anything
+    expect(screen.getByRole('button', { name: /send magic link/i })).toBeDisabled();
+    expect(screen.queryByText(/sending link|signing in/i)).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['magic link', () => mockSignIn, /send magic link/i, false],
+    ['password', () => mockPassword, /^sign in$/i, true],
+  ] as const)('a %s call that throws shows the error and frees the form', async (_name, mock, submit, password) => {
+    mock().mockRejectedValue(new Error('network down'));
+    renderLogin();
+    fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'user@example.com' } });
+    if (password) {
+      fireEvent.click(screen.getByRole('button', { name: 'Password' }));
+      fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'hunter2' } });
+    }
+    fireEvent.click(screen.getByRole('button', { name: submit }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('network down');
+    expect(screen.getByRole('button', { name: submit })).not.toBeDisabled();
+  });
+
+  it('a social call that throws something other than an Error still reports a failure', async () => {
+    mockOAuth.mockRejectedValue('boom');
+    renderLogin();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue with Google' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong. Try again.');
+    expect(screen.getByRole('button', { name: 'Continue with Google' })).not.toBeDisabled();
+  });
+
+  it('password mode will not submit without a password', () => {
+    renderLogin();
+    fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'user@example.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Password' }));
+    expect(screen.getByLabelText('Password')).toBeRequired();
+    expect(screen.getByRole('button', { name: /^sign in$/i })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'hunter2' } });
+    expect(screen.getByRole('button', { name: /^sign in$/i })).not.toBeDisabled();
+  });
+
   it('sent state offers a different email and no way around auth', async () => {
     mockSignIn.mockResolvedValue({ error: null });
     renderLogin();

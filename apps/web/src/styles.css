@@ -2056,19 +2056,6 @@ input, textarea, select {
   box-shadow: var(--shadow-sm);
 }
 
-.split-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--accent-default);
-  color: var(--white);
-  display: grid;
-  place-items: center;
-  font-weight: 600;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
 .split-info {
   flex: 1;
   min-width: 0;
@@ -2168,20 +2155,9 @@ input, textarea, select {
   gap: 0;
 }
 
-.settle-av {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  font-size: 11px;
-  font-weight: 600;
-  display: grid;
-  place-items: center;
-  color: white;
-  flex-shrink: 0;
-}
-
-.settle-av-from { background: var(--danger-default); }
-.settle-av-to   { background: var(--accent); }
+/* who owes (danger) and who is owed (accent), on Cobalt's Avatar */
+.settle-from { background: var(--danger-default); color: var(--white); }
+.settle-to   { background: var(--accent-default); color: var(--white); }
 
 .settle-connector {
   font-size: 12px;

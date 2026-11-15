@@ -280,7 +280,8 @@ graph TD
 apps/web/
   src/
     app/         — AppContext (all global state), router, route loaders
-    components/  — atomic design; a level may import only from the levels below it.
+    components/  — atomic design; a level may import from its own level or below, never above
+                   (enforced by components/layers.test.ts).
                    Anything Cobalt (@q-labs/cobalt) already provides is imported, not rebuilt.
                    atoms/       Icon, CatPip, SourceChip, StageDot, VendorMark
                    molecules/   Avatars, BudgetConversion, CategoryPips, DestinationBlurb, DocumentCard,
