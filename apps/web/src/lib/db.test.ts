@@ -6,6 +6,8 @@ vi.mock('./supabase', () => ({
     auth: {
       getSession: vi.fn(),
       signInWithOtp: vi.fn(),
+      signInWithPassword: vi.fn(),
+      signInWithOAuth: vi.fn(),
       signOut: vi.fn(),
       onAuthStateChange: vi.fn(),
     },
@@ -19,6 +21,8 @@ import { supabase } from './supabase';
 import {
   getSession,
   signInWithMagicLink,
+  signInWithPassword,
+  signInWithOAuth,
   signOut,
   subscribeAuthChange,
   hasSeededData,
@@ -67,6 +71,8 @@ const mockFrom = supabase.from as ReturnType<typeof vi.fn>;
 const mockAuth = supabase.auth as unknown as {
   getSession: ReturnType<typeof vi.fn>;
   signInWithOtp: ReturnType<typeof vi.fn>;
+  signInWithPassword: ReturnType<typeof vi.fn>;
+  signInWithOAuth: ReturnType<typeof vi.fn>;
   signOut: ReturnType<typeof vi.fn>;
   onAuthStateChange: ReturnType<typeof vi.fn>;
 };
@@ -102,6 +108,48 @@ describe('signInWithMagicLink', () => {
     const err = new Error('rate limited');
     mockAuth.signInWithOtp.mockResolvedValue({ error: err });
     expect(await signInWithMagicLink('a@b.com')).toEqual({ error: err });
+  });
+});
+
+describe('signInWithMagicLink redirect', () => {
+  it('sends the user back into the app, not the Supabase site URL', async () => {
+    mockAuth.signInWithOtp.mockResolvedValue({ error: null });
+    await signInWithMagicLink('a@b.com');
+    expect(mockAuth.signInWithOtp).toHaveBeenCalledWith({
+      email: 'a@b.com',
+      options: { emailRedirectTo: `${window.location.origin}/app/pipeline` },
+    });
+  });
+});
+
+describe('signInWithPassword', () => {
+  it('signs in with the email and password and returns error: null', async () => {
+    mockAuth.signInWithPassword.mockResolvedValue({ error: null });
+    expect(await signInWithPassword('a@b.com', 'hunter2')).toEqual({ error: null });
+    expect(mockAuth.signInWithPassword).toHaveBeenCalledWith({ email: 'a@b.com', password: 'hunter2' });
+  });
+
+  it('returns the error when the credentials are rejected', async () => {
+    const err = new Error('Invalid login credentials');
+    mockAuth.signInWithPassword.mockResolvedValue({ error: err });
+    expect(await signInWithPassword('a@b.com', 'nope')).toEqual({ error: err });
+  });
+});
+
+describe('signInWithOAuth', () => {
+  it.each(['google', 'apple'] as const)('starts the %s flow and returns to the app afterwards', async (provider) => {
+    mockAuth.signInWithOAuth.mockResolvedValue({ error: null });
+    expect(await signInWithOAuth(provider)).toEqual({ error: null });
+    expect(mockAuth.signInWithOAuth).toHaveBeenCalledWith({
+      provider,
+      options: { redirectTo: `${window.location.origin}/app/pipeline` },
+    });
+  });
+
+  it('returns the error when the provider cannot be started', async () => {
+    const err = new Error('Unsupported provider: provider is not enabled');
+    mockAuth.signInWithOAuth.mockResolvedValue({ error: err });
+    expect(await signInWithOAuth('apple')).toEqual({ error: err });
   });
 });
 

@@ -9,8 +9,30 @@ export async function getSession() {
   return data.session;
 }
 
+// Where every sign-in method sends the user once Supabase has authenticated them.
+// Must be on the project's allowed redirect URL list (see README).
+const appUrl = () => `${window.location.origin}/app/pipeline`;
+
 export async function signInWithMagicLink(email: string): Promise<{ error: Error | null }> {
-  const { error } = await supabase.auth.signInWithOtp({ email });
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: appUrl() },
+  });
+  return { error: error as Error | null };
+}
+
+export async function signInWithPassword(email: string, password: string): Promise<{ error: Error | null }> {
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  return { error: error as Error | null };
+}
+
+// On success the browser is redirected to the provider, so the promise only
+// matters when the flow could not start (for example the provider is disabled).
+export async function signInWithOAuth(provider: 'google' | 'apple'): Promise<{ error: Error | null }> {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo: appUrl() },
+  });
   return { error: error as Error | null };
 }
 

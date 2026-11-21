@@ -7,6 +7,8 @@ export default defineConfig({
     include: ['apps/web/src/**/*.{test,spec}.{ts,tsx}', 'api/**/*.{test,spec}.ts'],
     environment: 'jsdom',
     setupFiles: 'apps/web/vitest.setup.ts',
+    // Cobalt ships CSS imports that Node cannot load; let Vite process the package.
+    server: { deps: { inline: [/@q-labs\/cobalt/] } },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

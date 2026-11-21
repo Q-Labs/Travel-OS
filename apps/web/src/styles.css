@@ -1,81 +1,52 @@
 /* Travel OS — design tokens and base styles */
 
+/* Palette, type, radii, shadows and theming come from @q-labs/cobalt, which is
+   imported before this file. The names below are legacy aliases that point at
+   Cobalt's semantic tokens so there is a single source of truth: never define
+   a colour here that Cobalt already provides. Declared on [data-theme] as well
+   as :root so they resolve against the nearest theme, not just the document. */
+:root,
+[data-theme] {
+  --bg: var(--bg-base);
+  --surface: var(--bg-surface);
+  --surface-2: var(--bg-raised);
+  --ink: var(--text-primary);
+  --ink-2: var(--text-secondary);
+  --ink-3: var(--text-tertiary);
+  --ink-4: var(--text-disabled);
+  --divider: var(--border-default);
+  --divider-strong: var(--border-strong);
+
+  --accent: var(--accent-default);
+  --accent-soft: var(--accent-subtle);
+  --accent-ink: var(--text-accent);
+
+  --font-ui: var(--font-body);
+}
+
 :root {
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 22px;
+  /* Domain colours (trip categories and pipeline stages). Cobalt has no
+     equivalent; they are readable on both themes. */
+  --cat-family: oklch(66% 0.12 240);
+  --cat-race: oklch(72% 0.15 70);
+  --cat-couple: oklch(66% 0.11 150);
+  --cat-solo: oklch(64% 0.11 320);
+  --cat-work: oklch(62% 0.04 260);
+  --cat-friends: oklch(68% 0.12 20);
 
-  /* Things-3-ish warm, soft, spacious */
-  --bg: #f6f1e8;
-  --bg-raised: #fbf7ef;
-  --bg-sunken: #efe9de;
-  --surface: #ffffff;
-  --surface-2: #fbf7ef;
-  --ink: #2a2620;
-  --ink-2: #5a5147;
-  --ink-3: #8a8172;
-  --ink-4: #b8afa0;
-  --divider: rgba(42, 38, 32, 0.08);
-  --divider-strong: rgba(42, 38, 32, 0.14);
-
-  --accent: oklch(62% 0.15 50);      /* warm burnt orange */
-  --accent-soft: oklch(92% 0.04 60);
-  --accent-ink: oklch(35% 0.1 50);
-
-  --cat-family: oklch(58% 0.11 240);
-  --cat-race: oklch(68% 0.15 70);
-  --cat-couple: oklch(55% 0.1 150);
-  --cat-solo: oklch(55% 0.1 320);
-  --cat-work: oklch(50% 0.04 260);
-  --cat-friends: oklch(60% 0.12 20);
-
-  --stage-dreaming: oklch(72% 0.04 280);
-  --stage-planning: oklch(68% 0.09 55);
-  --stage-booked:   oklch(58% 0.11 150);
-  --stage-upcoming: oklch(60% 0.16 35);
-  --stage-active:   oklch(55% 0.2 20);
-  --stage-archived: oklch(60% 0.02 80);
-
-  --shadow-sm: 0 1px 2px rgba(42, 38, 32, 0.05), 0 1px 0 rgba(255,255,255,0.6) inset;
-  --shadow-md: 0 2px 4px rgba(42,38,32,0.04), 0 8px 24px rgba(42,38,32,0.06);
-  --shadow-lg: 0 4px 8px rgba(42,38,32,0.06), 0 24px 60px rgba(42,38,32,0.10);
-
-  --font-display: 'Instrument Serif', 'Times New Roman', serif;
-  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+  --stage-dreaming: var(--status-neutral);
+  --stage-planning: var(--status-warning);
+  --stage-booked:   var(--status-active);
+  --stage-upcoming: var(--accent-default);
+  --stage-active:   var(--status-danger);
+  --stage-archived: var(--status-offline);
 
   --density: 1; /* 0.85 compact, 1 normal, 1.15 spacious */
 }
 
-[data-theme="dark"] {
-  --bg: #1a1814;
-  --bg-raised: #201d18;
-  --bg-sunken: #141210;
-  --surface: #24201b;
-  --surface-2: #2a2620;
-  --ink: #f0ebe0;
-  --ink-2: #c4bdaf;
-  --ink-3: #8a8172;
-  --ink-4: #605749;
-  --divider: rgba(240, 235, 224, 0.08);
-  --divider-strong: rgba(240, 235, 224, 0.14);
-
-  --accent: oklch(72% 0.15 55);
-  --accent-soft: oklch(30% 0.06 55);
-  --accent-ink: oklch(85% 0.08 55);
-
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.25);
-  --shadow-md: 0 2px 4px rgba(0,0,0,0.2), 0 8px 24px rgba(0,0,0,0.3);
-  --shadow-lg: 0 4px 8px rgba(0,0,0,0.3), 0 24px 60px rgba(0,0,0,0.5);
-
-  --stage-dreaming: oklch(75% 0.04 280);
-  --stage-planning: oklch(75% 0.12 60);
-  --stage-booked:   oklch(70% 0.13 150);
-  --stage-upcoming: oklch(72% 0.16 40);
-}
-
 * { box-sizing: border-box; }
+
+em { font-style: normal; }
 
 html, body {
   margin: 0;
@@ -117,52 +88,18 @@ input, textarea, select {
 /* App shell                                                         */
 /* ================================================================ */
 
-.app {
-  display: grid;
-  grid-template-columns: 232px 1fr;
-  min-height: 100vh;
-}
 
-.sidebar {
-  background: var(--bg-sunken);
-  border-right: 1px solid var(--divider);
-  padding: 22px 16px;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
 
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 8px 20px;
-}
-.brand-mark {
-  width: 28px; height: 28px;
-  border-radius: 8px;
-  background: var(--ink);
-  color: var(--bg);
-  display: grid; place-items: center;
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-style: italic;
-  font-weight: 400;
-  line-height: 1;
 }
 .brand-name {
   font-family: var(--font-display);
-  font-size: 22px;
-  letter-spacing: -0.01em;
-  font-weight: 400;
-}
-.brand-name em {
-  font-style: italic;
-  color: var(--ink-3);
-  font-weight: 400;
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tight);
+  font-weight: var(--weight-semibold);
 }
 
 .nav-section {
@@ -174,105 +111,21 @@ input, textarea, select {
   padding: 16px 10px 6px;
 }
 
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 10px;
-  border-radius: 8px;
-  color: var(--ink-2);
-  width: 100%;
-  text-align: left;
-  font-size: 13.5px;
-  transition: background 120ms ease, color 120ms ease;
-}
-.nav-item:hover { background: var(--divider); color: var(--ink); }
-.nav-item.active { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm); }
-.nav-item .count {
-  margin-left: auto;
-  font-size: 11.5px;
-  color: var(--ink-3);
-  font-variant-numeric: tabular-nums;
-}
-.nav-item .dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: currentColor; opacity: 0.7;
-}
 
 .sidebar-footer {
-  margin-top: auto;
-  padding: 14px 10px 6px;
-  border-top: 1px solid var(--divider);
+  padding: 0 var(--space-2) 0 0;
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 12.5px;
   color: var(--ink-2);
 }
-.avatar {
-  width: 26px; height: 26px; border-radius: 50%;
-  background: var(--accent);
-  color: white;
-  display: grid; place-items: center;
-  font-weight: 600;
-  font-size: 12px;
-}
 
 /* Main area */
-.main {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
 
-.topbar {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 18px 36px 6px;
-}
-.topbar .spacer { flex: 1; }
-.topbar h1 {
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 32px;
-  margin: 0;
-  letter-spacing: -0.01em;
-}
-.topbar h1 em { font-style: italic; color: var(--ink-3); font-weight: 400; }
-.topbar .subtitle {
-  font-size: 13px;
-  color: var(--ink-3);
-  margin-top: 2px;
-}
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 500;
-  background: var(--surface);
-  color: var(--ink);
-  border: 1px solid var(--divider);
-  box-shadow: var(--shadow-sm);
-  transition: transform 80ms ease, background 120ms ease;
-}
-.btn:hover { background: var(--bg-raised); }
-.btn:active { transform: translateY(1px); }
-.btn.primary {
-  background: var(--ink);
-  color: var(--bg);
-  border-color: var(--ink);
-}
-.btn.primary:hover { background: #000; }
-[data-theme="dark"] .btn.primary { background: var(--accent); color: #1a1814; border-color: var(--accent); }
 [data-theme="dark"] .btn.primary:hover { filter: brightness(1.05); }
 
-.btn.ghost { background: transparent; border-color: transparent; box-shadow: none; }
-.btn.ghost:hover { background: var(--divider); }
 
 .icon-btn {
   width: 32px; height: 32px;
@@ -284,81 +137,50 @@ input, textarea, select {
 .icon-btn:hover { background: var(--divider); color: var(--ink); }
 
 .search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--surface);
-  border: 1px solid var(--divider);
-  border-radius: 999px;
-  padding: 6px 12px;
+  position: relative;
   min-width: 280px;
-  box-shadow: var(--shadow-sm);
 }
-.search input {
-  flex: 1;
-  background: none;
-  border: none;
-  outline: none;
-  font-size: 13px;
+.search svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
 }
+.search input { padding-left: 34px; height: 36px; }
+
+/* Cobalt's NavItem sits inside a router link; the link must not add its own look. */
+.nav-link { display: block; text-decoration: none; color: inherit; }
+.nav-link:focus-visible { outline: 2px solid var(--accent-default); border-radius: var(--radius-md); }
+[role="button"]:focus-visible { outline: 2px solid var(--accent-default); border-radius: var(--radius-md); }
+
+.avatar-more {
+  display: grid; place-items: center;
+  min-width: 24px; height: 24px; padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--bg-overlay);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+}
+.tcard-avatars { gap: 2px; align-items: center; }
 
 /* ================================================================ */
 /* Dashboard                                                         */
 /* ================================================================ */
 
-.dashboard { padding: 10px 36px 60px; }
+.dashboard { padding: 0 0 var(--space-12); }
 
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin: 18px 0 24px;
+  gap: var(--space-4);
+  margin: 0 0 var(--space-6);
 }
 
-.metric {
-  background: var(--surface);
-  border: 1px solid var(--divider);
-  border-radius: var(--radius-lg);
-  padding: 18px 18px 16px;
-  box-shadow: var(--shadow-sm);
-  position: relative;
-  overflow: hidden;
-}
-.metric .label {
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--ink-3);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-.metric .value {
-  font-family: var(--font-display);
-  font-size: 38px;
-  font-weight: 400;
-  line-height: 1.05;
-  margin-top: 4px;
-  letter-spacing: -0.01em;
-}
-.metric .value em { font-style: italic; color: var(--ink-3); }
-.metric .hint {
-  font-size: 12px;
-  color: var(--ink-3);
-  margin-top: 6px;
-}
-.metric .suffix {
-  font-size: 14px;
-  color: var(--ink-3);
-  margin-left: 4px;
-  font-family: var(--font-ui);
-}
 
-.metric .spark {
-  position: absolute;
-  right: 12px; top: 12px;
-  opacity: 0.5;
-}
 
-.metric.pop .value { color: var(--accent); }
 
 /* Year timeline (novel touch) */
 .year-ribbon {
@@ -455,7 +277,7 @@ input, textarea, select {
   font-weight: 400;
   letter-spacing: -0.01em;
 }
-.pipeline-head h3 em { font-style: italic; color: var(--ink-3); }
+.pipeline-head h3 em { font-style: normal; color: var(--ink-3); }
 
 .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .chip {
@@ -470,9 +292,9 @@ input, textarea, select {
 }
 .chip:hover { background: var(--divider); }
 .chip.on {
-  background: var(--ink);
-  color: var(--bg);
-  border-color: var(--ink);
+  background: var(--accent-subtle);
+  color: var(--text-accent);
+  border-color: var(--accent-default);
 }
 .chip .sw { width: 8px; height: 8px; border-radius: 50%; }
 
@@ -609,17 +431,6 @@ input, textarea, select {
   display: flex;
   margin-left: auto;
 }
-.tcard-avatars .av {
-  width: 18px; height: 18px; border-radius: 50%;
-  background: var(--ink);
-  color: var(--bg);
-  display: grid; place-items: center;
-  font-size: 10px;
-  font-weight: 600;
-  border: 1.5px solid var(--surface);
-  margin-left: -6px;
-}
-.tcard-avatars .av:first-child { margin-left: 0; }
 
 .tcard-countdown {
   font-size: 11px;
@@ -629,7 +440,7 @@ input, textarea, select {
 }
 .tcard-approx {
   font-family: var(--font-display);
-  font-style: italic;
+  font-style: normal;
   color: var(--ink-3);
   font-size: 13px;
 }
@@ -644,7 +455,7 @@ input, textarea, select {
   font-size: 20px;
   font-weight: 400;
 }
-.insights h3 em { font-style: italic; color: var(--ink-3); }
+.insights h3 em { font-style: normal; color: var(--ink-3); }
 .insights-scroller {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -729,7 +540,7 @@ input, textarea, select {
   margin: 0;
   color: white;
 }
-.trip-hero h1 em { font-style: italic; color: rgba(255,255,255,0.85); }
+.trip-hero h1 em { font-style: normal; color: rgba(255,255,255,0.85); }
 .trip-hero .sub {
   color: rgba(255,255,255,0.85);
   font-size: 14px;
@@ -743,7 +554,7 @@ input, textarea, select {
   font-family: var(--font-display);
   font-size: 60px;
   line-height: 1;
-  font-style: italic;
+  font-style: normal;
 }
 .trip-hero .countdown .u {
   font-size: 12px;
@@ -760,7 +571,7 @@ input, textarea, select {
   background: var(--surface);
   border-radius: var(--radius-lg);
   border: 1px solid var(--divider);
-  margin: -32px 36px 0;
+  margin: var(--space-6) 0 0;
   position: relative;
   z-index: 3;
   box-shadow: var(--shadow-md);
@@ -784,7 +595,7 @@ input, textarea, select {
   margin-top: 4px;
   line-height: 1.1;
 }
-.trip-stat .v em { font-style: italic; color: var(--ink-3); font-size: 18px; }
+.trip-stat .v em { font-style: normal; color: var(--ink-3); font-size: 18px; }
 .trip-stat.status .v { font-size: 20px; }
 .trip-stat .progressbar {
   height: 4px;
@@ -843,7 +654,7 @@ input, textarea, select {
   font-family: var(--font-display);
   font-size: 40px;
   line-height: 1;
-  font-style: italic;
+  font-style: normal;
   color: var(--ink);
 }
 .day-date {
@@ -895,7 +706,7 @@ input, textarea, select {
   font-size: 12.5px;
   color: var(--ink-4);
   padding: 6px 10px;
-  font-style: italic;
+  font-style: normal;
   font-family: var(--font-display);
 }
 .activity-add {
@@ -1056,9 +867,9 @@ input, textarea, select {
   transition: all 140ms ease;
 }
 .packing-item.done .box {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--bg);
+  background: var(--accent-default);
+  border-color: var(--accent-default);
+  color: var(--white);
 }
 .packing-item.done .name {
   text-decoration: line-through;
@@ -1146,7 +957,7 @@ input, textarea, select {
   font-size: 56px;
   line-height: 1;
   font-weight: 400;
-  font-style: italic;
+  font-style: normal;
 }
 .trip-countdown span {
   display: block;
@@ -1180,19 +991,6 @@ input, textarea, select {
   font-size: 12px;
 }
 
-.mini-progress {
-  margin-top: 10px;
-  width: 100%;
-  height: 6px;
-  background: var(--bg-sunken);
-  border-radius: 999px;
-  overflow: hidden;
-}
-.mini-progress > div {
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent), color-mix(in oklab, var(--accent) 75%, white));
-}
 
 .trip-tabs {
   display: flex;
@@ -1428,7 +1226,7 @@ input, textarea, select {
 .trip-empty-inline p {
   margin: 0;
   color: var(--ink-3);
-  font-style: italic;
+  font-style: normal;
 }
 
 .booking-table-head {
@@ -1591,9 +1389,9 @@ input, textarea, select {
   flex-shrink: 0;
 }
 .packing-item.done .packing-box {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--bg);
+  background: var(--accent-default);
+  border-color: var(--accent-default);
+  color: var(--white);
 }
 .packing-qty {
   margin-left: auto;
@@ -1675,7 +1473,7 @@ input, textarea, select {
   margin: 0;
   letter-spacing: -0.01em;
 }
-.modal-head h2 em { font-style: italic; color: var(--ink-3); }
+.modal-head h2 em { font-style: normal; color: var(--ink-3); }
 .modal-steps {
   display: flex; gap: 6px; margin-top: 12px;
 }
@@ -1683,7 +1481,7 @@ input, textarea, select {
   flex: 1; height: 3px; border-radius: 2px;
   background: var(--divider);
 }
-.modal-steps .s.on { background: var(--ink); }
+.modal-steps .s.on { background: var(--accent-default); }
 .modal-body {
   padding: 8px 28px 24px;
   display: flex; flex-direction: column; gap: 16px;
@@ -1706,7 +1504,7 @@ input, textarea, select {
   outline: none;
 }
 .field input:focus, .field select:focus, .field textarea:focus {
-  border-color: var(--ink);
+  border-color: var(--accent-default);
   background: var(--surface);
 }
 .cat-pick { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -1716,7 +1514,7 @@ input, textarea, select {
   border: 1px solid var(--divider-strong);
   display: inline-flex; align-items: center; gap: 6px;
 }
-.cat-pick .c.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.cat-pick .c.on { background: var(--accent-subtle); color: var(--text-accent); border-color: var(--accent-default); }
 .modal-foot {
   padding: 16px 28px 22px;
   display: flex; justify-content: space-between; align-items: center;
@@ -1766,8 +1564,8 @@ input, textarea, select {
   border: 1px solid transparent;
 }
 .tweak-row .opts .o.on {
-  background: var(--ink);
-  color: var(--bg);
+  background: var(--accent-default);
+  color: var(--white);
 }
 .tweak-row .swatches { display: flex; gap: 8px; }
 .tweak-row .sw {
@@ -1775,7 +1573,7 @@ input, textarea, select {
   border: 2px solid transparent;
   cursor: pointer;
 }
-.tweak-row .sw.on { border-color: var(--ink); }
+.tweak-row .sw.on { border-color: var(--text-primary); }
 
 /* Calendar view */
 .calendar {
@@ -1846,7 +1644,7 @@ input, textarea, select {
   font-weight: 400;
   margin: 0;
   color: var(--ink);
-  font-style: italic;
+  font-style: normal;
   font-variant-numeric: tabular-nums;
 }
 .archive-year-stats {
@@ -2012,7 +1810,7 @@ input, textarea, select {
 .login-left {
   position: relative;
   overflow: hidden;
-  background: var(--ink);
+  background: var(--bg-surface);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -2236,7 +2034,7 @@ input, textarea, select {
 }
 
 .split-heading em {
-  font-style: italic;
+  font-style: normal;
   color: var(--ink-3);
 }
 
@@ -2256,19 +2054,6 @@ input, textarea, select {
   border: 1px solid var(--divider);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
-}
-
-.split-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--ink);
-  color: var(--bg);
-  display: grid;
-  place-items: center;
-  font-weight: 600;
-  font-size: 14px;
-  flex-shrink: 0;
 }
 
 .split-info {
@@ -2370,20 +2155,9 @@ input, textarea, select {
   gap: 0;
 }
 
-.settle-av {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  font-size: 11px;
-  font-weight: 600;
-  display: grid;
-  place-items: center;
-  color: white;
-  flex-shrink: 0;
-}
-
-.settle-av-from { background: var(--ink); }
-.settle-av-to   { background: var(--accent); }
+/* who owes (danger) and who is owed (accent), on Cobalt's Avatar */
+.settle-from { background: var(--danger-default); color: var(--white); }
+.settle-to   { background: var(--accent-default); color: var(--white); }
 
 .settle-connector {
   font-size: 12px;
@@ -2419,7 +2193,7 @@ input, textarea, select {
 }
 
 .split-empty-title em {
-  font-style: italic;
+  font-style: normal;
 }
 
 .split-empty-hint {
@@ -2437,8 +2211,6 @@ input, textarea, select {
   .trip-budget-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 720px) {
-  .app { grid-template-columns: 1fr; }
-  .sidebar { display: none; }
   .pipeline { grid-template-columns: 1fr; }
   .metrics { grid-template-columns: 1fr 1fr; }
   .trip-hero h1 { font-size: 44px; }
@@ -2450,7 +2222,6 @@ input, textarea, select {
   .trip-hero { padding: 20px; }
   .trip-stats { margin: -20px 16px 0; }
   .dashboard { padding: 10px 16px 40px; }
-  .topbar { padding: 14px 16px 6px; }
   .progress-row,
   .day-card,
   .booking-table-head,
@@ -2458,4 +2229,12 @@ input, textarea, select {
   .trip-empty-inline,
   .packing-header { flex-direction: column; align-items: stretch; }
   .packing-progress { width: 100%; }
+}
+
+/* Cobalt's ProgressMini is a fixed 60px chip; inside rows and stat cells it should fill the row. */
+.trip-stat [role="progressbar"],
+.progress-row [role="progressbar"],
+.packing-progress [role="progressbar"] {
+  width: 100%;
+  margin-top: var(--space-2);
 }

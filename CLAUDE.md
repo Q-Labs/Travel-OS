@@ -5,9 +5,19 @@
 ```
 apps/web/
   src/
-    app/         — AppContext (all global state + useApp), router, routes, Login, main
-    components/  — PipelineDashboard, InboxDashboard, CalendarDashboard, ArchiveDashboard,
-                   TripCard, TweaksPanel, modals/ (AddTripModal, IntegrationsModal), …
+    app/         — AppContext (all global state + useApp), router, routes (loaders), main
+    components/  — atomic design; a level may import from its own level or below, never above
+                   (enforced by components/layers.test.ts).
+                   Anything Cobalt (@q-labs/cobalt) already provides is imported, not rebuilt.
+                   atoms/       Icon, CatPip, SourceChip, StageDot, VendorMark
+                   molecules/   Avatars, BudgetConversion, CategoryPips, DestinationBlurb, DocumentCard,
+                                EmptyState, ParsedCard, ProgressRow, TripStat
+                   organisms/   TripCard, KanbanBoard, YearRibbon, MetricsStrip, InsightsStrip, Sidebar,
+                                Topbar, InboxRow, BookingsPanel, SplitBudget, TripDetailContent,
+                                AddTripModal, IntegrationsModal, TweaksPanel
+                   templates/   AuthLayout (signed-out frame); the signed-in frame is Cobalt's DashboardLayout
+                   pages/       one per route: Pipeline, Inbox, Calendar, Archive, TripDetail,
+                                Login, plus AppLayout
     lib/         — types.ts, data.ts (fixtures), db.ts (Supabase CRUD + Realtime),
                    trips.ts (pure trip selectors), supabase.ts (client), utils.ts
 api/             — Vercel serverless functions. These must live at the repo root:
@@ -19,7 +29,9 @@ api/             — Vercel serverless functions. These must live at the repo ro
 ```
 
 All state lives in `AppContext`; mutations flow `useApp()` action → `lib/db.ts` → Supabase.
-Components read via `useApp()` and never hold trip data locally. Root `vite.config.ts`
+Components read via `useApp()` and never hold trip data locally. Only organisms and pages
+call `useApp()`; atoms, molecules and templates take everything as props. New UI goes in the
+lowest level that fits. Root `vite.config.ts`
 configures both the build and the Vitest runner. Requires Node ≥ 24 (see `package.json`).
 
 ## Commands
@@ -84,8 +96,8 @@ When addressing feedback on a pull request:
 
 - TypeScript strict mode — no `any`, no non-null assertions without a comment
 - React functional components only; all state via `useApp()` from `AppContext`
-- CSS via `styles.css` using the existing CSS-variable design tokens (`--accent`, `--ink`, `--surface`, …)
-- No new dependencies without discussion
+- UI is built on the **Cobalt design system** (`@q-labs/cobalt`): use its components before writing your own (`components/cobalt-usage.test.ts` guards this) and its tokens for colour, type, radius and shadow. `styles.css` holds only app-specific layout; its legacy names (`--accent`, `--ink`, `--surface`, …) alias Cobalt tokens, so never add a new palette
+- No new dependencies without discussion (`@q-labs/cobalt` is the agreed design-system dependency; installing it needs a `read:packages` token, see README)
 - Commit messages: `type(#issue): short description` (e.g. `feat(#7): add AddTripModal wizard`)
 
 ## README

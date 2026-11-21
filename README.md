@@ -20,14 +20,15 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 | UI | React 18 + TypeScript (strict) |
 | Build / dev server | Vite 5 |
 | Routing | React Router v6 |
-| Backend | Supabase (Postgres + magic-link auth + Realtime) |
+| Backend | Supabase (Postgres + Auth: magic link, password, Google, Apple + Realtime) |
 | AI | Anthropic Claude Haiku (email parsing via `@anthropic-ai/sdk`) |
 | Weather / geocoding | [Open-Meteo](https://open-meteo.com) — no API key, no account |
 | Exchange rates | [Frankfurter](https://frankfurter.dev) (ECB reference rates) — no API key |
 | Destination context | [Wikipedia REST API](https://en.wikipedia.org/api/rest_v1/) — no API key |
 | Unit tests | Vitest + Testing Library (100% branch coverage enforced) |
 | E2E / visual tests | Playwright (Chromium, with screenshot regression) |
-| Styling | Vanilla CSS with design-token variables |
+| Design system | [Cobalt](https://github.com/Q-Labs/cobalt) (`@q-labs/cobalt`): Quincy OS tokens + components |
+| Styling | App CSS on top of Cobalt's design tokens |
 | Deployment | Vercel |
 
 ## Prerequisites
@@ -36,6 +37,32 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 - A [Supabase](https://supabase.com) account
 - An [Anthropic](https://console.anthropic.com) account (for the email ingestion API)
 - A [Vercel](https://vercel.com) account (for deployment)
+- A GitHub token with `read:packages` scope, to install the private [Cobalt](https://github.com/Q-Labs/cobalt) design system (see below)
+
+## Design system (Cobalt)
+
+The UI is built on **Cobalt**, the React component library for the Quincy OS design system
+(`@q-labs/cobalt`, [repo](https://github.com/Q-Labs/cobalt), [Storybook](https://q-labs.github.io/cobalt)).
+It is published to GitHub Packages, so installing needs a token:
+
+1. The repo's `.npmrc` already maps the scope (`@q-labs:registry=https://npm.pkg.github.com`); it holds no secret.
+2. Add your token to your **user-level** `~/.npmrc`, not the repo's:
+   ```
+   //npm.pkg.github.com/:_authToken=<GitHub PAT with read:packages>
+   ```
+3. `npm ci`.
+
+**CI** reads the token from the `NPM_TOKEN` repository secret (a PAT with `read:packages`), or falls back to
+`GITHUB_TOKEN` when the package grants this repository access (package settings → *Manage Actions access*).
+**Vercel** needs an `NPM_RC` environment variable containing the two `.npmrc` lines above, with the real token.
+
+How it is used:
+
+- `main.tsx` imports `@q-labs/cobalt/styles.css` and `app/CobaltRoot.tsx` wraps the app in `CobaltProvider`, driven by the theme in `AppContext` (dark by default; light is available in Tweaks).
+- Use Cobalt's components (`Button`, `Input`, `Avatar`, `ProgressMini`, `MetricCard`, `Sidebar`, `NavItem`, `Topbar`, `DashboardLayout`, `LogoMark`, …) before writing your own. `components/cobalt-usage.test.ts` fails if a hand-rolled equivalent creeps back in.
+- Colours, fonts, radii and shadows come from Cobalt's tokens. The older variable names in `styles.css` (`--bg`, `--ink`, `--accent`, …) are aliases onto them; do not define a new palette.
+- Tweaks keeps Cobalt's accent as the default and offers three alternates that override Cobalt's `--accent-*` tokens.
+- Things Cobalt does not provide (kanban board, year ribbon, trip card, bookings table, calendar grid) live in `components/` and are styled with Cobalt tokens only.
 
 ## Service setup
 
@@ -44,7 +71,11 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 Supabase provides the database, authentication, and real-time subscriptions.
 
 1. Go to [supabase.com](https://supabase.com) and create a new project.
-2. Once provisioned, open **Authentication → Providers** and ensure **Email** is enabled (magic-link / OTP — no password required).
+2. Once provisioned, open **Authentication → Providers** and enable the sign-in methods the login screen offers:
+   - **Email** — covers both the magic link and the email + password mode. Create password users under **Authentication → Users**.
+   - **Google** and **Apple** — each needs OAuth credentials from the provider's console. A provider that is not enabled makes its button show an error instead of signing in.
+
+   Then open **Authentication → URL Configuration** and add `http://localhost:5173/app/pipeline` and your production URL's `/app/pipeline` to **Redirect URLs**. Every sign-in method sends the user back there; without it Supabase falls back to the Site URL.
 3. Open **Settings → API** and copy:
    - **Project URL** → `VITE_SUPABASE_URL` and `SUPABASE_URL`
    - **anon / public key** → `VITE_SUPABASE_ANON_KEY`
@@ -161,7 +192,7 @@ cp .env.example .env   # fill in your credentials (see Environment variables bel
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) and sign in with your email via magic link.
+Open [http://localhost:5173](http://localhost:5173) and sign in with a magic link, email + password, Google or Apple.
 
 On first login the app seeds fixture trips, bookings, and inbox items so you have something to explore immediately.
 
@@ -248,9 +279,19 @@ graph TD
 ```
 apps/web/
   src/
-    app/         — AppLayout, AppContext (all global state), router, Login
-    components/  — PipelineDashboard, InboxDashboard, CalendarDashboard,
-                   ArchiveDashboard, TripCard, modals/, …
+    app/         — AppContext (all global state), router, route loaders
+    components/  — atomic design; a level may import from its own level or below, never above
+                   (enforced by components/layers.test.ts).
+                   Anything Cobalt (@q-labs/cobalt) already provides is imported, not rebuilt.
+                   atoms/       Icon, CatPip, SourceChip, StageDot, VendorMark
+                   molecules/   Avatars, BudgetConversion, CategoryPips, DestinationBlurb, DocumentCard,
+                                EmptyState, ParsedCard, ProgressRow, TripStat
+                   organisms/   TripCard, KanbanBoard, YearRibbon, MetricsStrip, InsightsStrip, Sidebar,
+                                Topbar, InboxRow, BookingsPanel, SplitBudget, TripDetailContent,
+                                AddTripModal, IntegrationsModal, TweaksPanel
+                   templates/   AuthLayout (signed-out frame); the signed-in frame is Cobalt's DashboardLayout
+                   pages/       one per route: Pipeline, Inbox, Calendar, Archive, TripDetail,
+                                Login, plus AppLayout
     lib/         — types.ts, db.ts (Supabase CRUD + Realtime), data.ts (fixtures), utils.ts,
                    rows.ts (row → domain mappers), insights.ts (pure insight rules),
                    inboundEmail.ts (provider webhook adapters), ical.ts (RFC 5545 writer),

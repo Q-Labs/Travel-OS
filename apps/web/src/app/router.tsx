@@ -1,14 +1,12 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import {
-  AppLayout,
-  ArchivePage,
-  CalendarPage,
-  InboxPage,
-  PipelinePage,
-  TripDetailPage,
-  authGuardLoader,
-} from './routes';
-import { Login } from './Login';
+import { authGuardLoader } from './routes';
+import { AppLayout } from '../components/pages/AppLayout';
+import { ArchivePage } from '../components/pages/ArchivePage';
+import { CalendarPage } from '../components/pages/CalendarPage';
+import { InboxPage } from '../components/pages/InboxPage';
+import { LoginPage } from '../components/pages/LoginPage';
+import { PipelinePage } from '../components/pages/PipelinePage';
+import { TripDetailPage } from '../components/pages/TripDetailPage';
 
 export const router = createBrowserRouter([
   {
@@ -17,7 +15,7 @@ export const router = createBrowserRouter([
   },
   {
     path: '/login',
-    element: <Login />,
+    element: <LoginPage />,
   },
   {
     path: '/app',
