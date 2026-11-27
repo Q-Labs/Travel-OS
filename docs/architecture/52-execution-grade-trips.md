@@ -229,10 +229,12 @@ Architecture that belongs to one experience is written into that story. This tab
 | #85 Timed calendar events | Runs in the `calendar-feed` Edge Function; event ids from booking ids | #120, #76 |
 | #86 Nationality, passports, authorisations, stays | One column, three tables | #116, #117 |
 | #87 Rules table and readiness engine | Pure module in the shared code; reference-data test | #86, #76 |
+| #90 Schengen day counter | Trips are computed; only stays the app does not know about are stored | #86 |
 | #91 Readiness insights | Constraint migration; runs in `insights-refresh` | #122, #116, #87 |
 | #93 Expenses and settlements | Two tables; opening-entry migration | #116, #117, #118 |
 | #94 Ledger maths | Pure module; whole minor units | — |
 | #96 Expense editor | Dated exchange rate, stored on the row | #93 |
+| #97 Balances and settle-up | One row per recorded payment | #93, #118 |
 | #98 One "spent" figure | Old columns stop being written | #94 |
 | #99 Rights logic | Pure module; date-aware reference data | #76, #74 |
 | #101 Disruption mode | Two tables; add-only entries; ids made in the browser | #116, #118, #99 |
