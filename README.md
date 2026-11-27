@@ -257,6 +257,8 @@ Commit the updated PNGs in `e2e/__snapshots__/` as part of the same PR.
 
 ## Architecture
 
+The full description is in [`docs/architecture.md`](docs/architecture.md): what runs where, the data model, the pipeline and the gaps against the Engineering Handbook. Where the app is going next is in [`docs/architecture/52-execution-grade-trips.md`](docs/architecture/52-execution-grade-trips.md), and the reason for each choice is in [`docs/decisions/`](docs/decisions/README.md).
+
 ### Diagram
 
 ```mermaid
