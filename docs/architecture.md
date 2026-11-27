@@ -6,7 +6,7 @@ What Travel OS is made of today, where each part runs, and why. This page descri
 - **Why each choice was made:** [`decisions/`](decisions/README.md).
 - **The standard this is measured against:** the [Engineering Handbook](https://github.com/qiheme/handbook), [Web app](https://github.com/qiheme/handbook/blob/master/blueprints/web-app.md) blueprint.
 
-**Checked on 27 Nov 2026** against `main` at `e9e9c23`, the Vercel deployment record and the Supabase project. Anything that could not be checked is listed under [Not verified](#not-verified).
+**Checked on 27 Nov 2026** against `main` at `e9e9c23`, the Vercel deployment record and the Supabase project. The handbook comparison uses its default branch as of the same day, after the Storybook and JSDoc rules (D26, D27) were added. Anything that could not be checked is listed under [Not verified](#not-verified).
 
 ## The system in one picture
 
@@ -227,6 +227,8 @@ Stack-level gaps only. Each has an issue.
 | Script names, hooks, CI on the pinned Node, CI secret name, issue forms, pull-request template, verify skill | Filed by the handbook audit | #54 to #63 |
 | End-to-end tests against the built output | Against the dev server | #119, #106 |
 | Tools within one major of the baseline | Vite and Vitest are three behind | #125 |
+| Storybook 10, with a story file for every component, built in CI (D26) | No Storybook. 36 components, no story file | #128 |
+| JSDoc on every export, enforced by `eslint-plugin-jsdoc` (D27) | The plugin is not in the lint. Comments are written where the author chose to | #129 |
 | `docs/architecture.md` | This page | #114 |
 
 Not a handbook gap, but in the way: seven prototype files at the repository root that nothing imports (#126).

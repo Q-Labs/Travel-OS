@@ -83,6 +83,8 @@ flowchart LR
 | Shared pure code | `api/` imports `apps/web/src/lib/` by relative path | One folder of pure modules both runtimes import. The first function settles how | #120 |
 | Model call | The SDK, called in the handler | A provider adapter with a mock; model name from configuration | #121 |
 | End-to-end tests | Dev server, dev-only sign-in bypass, desktop only | The built app in demo mode; a phone project added | #119, #106 |
+| Component explorer | None | Storybook 10, a story per component and state, built in CI. Every new component in #52 ships with its story | #128 |
+| Code documentation | Comments where the author chose | JSDoc on every export, enforced by the lint | #129 |
 | Headers | None | `_headers` with a Content-Security-Policy for this app | #123 |
 
 ## Data
@@ -246,14 +248,14 @@ Architecture that belongs to one experience is written into that story. This tab
 | Wave | Stories | Must land before |
 | --- | --- | --- |
 | 0. Write it down | #114 | Everything |
-| 1. Tidy | #126, #53, #55 to #59, #61 to #63, #125 | Nothing depends on it, but it is cheapest first |
+| 1. Tidy | #126, #53, #55 to #59, #61 to #63, #125, #129, #128 | Nothing depends on it, but most of it is cheapest first. The Storybook back-fill (#128) is the large one and can run beside wave 2 |
 | 2. Make data safe | #115 → #116; #117 → #118 → #119 | Any story in #52 that writes a migration or a form |
 | 3. Move the server code | #120 → #121, #122 | #83, #85, #91 |
 | 4. Move the host | #60 + #123 → #124 | The first release of #52 to production |
 
 Workstream 3 (the ledger) needs only waves 0 to 2. It can start while waves 3 and 4 are in progress.
 
-**Size of the standalone work** (#114 to #126): one XS, five S, seven M on the issue-form scale. These are estimates, not dates.
+**Size of the standalone work** (#114 to #126, #128, #129): one XS, five S, eight M and one L on the issue-form scale. These are estimates, not dates.
 
 ## Running cost
 
@@ -279,4 +281,4 @@ Workstream 3 (the ledger) needs only waves 0 to 2. It can start while waves 3 an
 | Frankfurter's dated-rate endpoint and how far back it goes | Decides the "rate unavailable" state in #96 | #96 |
 | The live schema | Unknown until read | #115 |
 | Two devices on one account editing the same trip's bookings | Reduced, not removed: a write now sends one column, not six. [0004](../decisions/0004-tables-for-new-data-one-action-one-row.md) says what would move bookings to a table | Watch |
-| The standalone work is large next to the features it supports | Seven M-sized stories before or beside the first feature | The owner's call on order; wave 2 is the only hard gate |
+| The standalone work is large next to the features it supports | Eight M-sized stories and one L before or beside the first feature | The owner's call on order; wave 2 is the only hard gate |
