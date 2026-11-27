@@ -26,6 +26,10 @@ api/             — Vercel serverless functions. These must live at the repo ro
   inbox/ingest.ts    — POST /api/inbox/ingest; Claude Haiku email parsing
   insights/refresh.ts — daily cron; regenerates insights
   calendar/feed.ts   — read-only iCal feed
+docs/
+  architecture.md    — the system as built; updated in the same PR as the code it describes
+  architecture/      — one target document per epic that changes data, server code or hosting
+  decisions/         — one short record per architecture decision
 ```
 
 All state lives in `AppContext`; mutations flow `useApp()` action → `lib/db.ts` → Supabase.
