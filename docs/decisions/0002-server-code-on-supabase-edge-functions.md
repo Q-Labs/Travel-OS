@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed. Needs the owner’s yes (handbook decisions O3 and O5 are open) |
+| **Status** | Accepted by #127. The handbook choices it leans on, O3 and O5, were decided by the owner on 27 Nov 2026 |
 | **Written** | 27 Nov 2026, with the architecture baseline (#114) |
 | **Work** | #120, #121, #122 |
 

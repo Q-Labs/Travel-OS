@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed. Needs the owner’s yes (a new dependency; handbook decision D3 is proposed) |
+| **Status** | Accepted by #127, including the new dependency. The handbook choice it leans on, D3, was decided by the owner on 27 Nov 2026 |
 | **Written** | 27 Nov 2026, with the architecture baseline (#114) |
 | **Work** | #118, #73 |
 

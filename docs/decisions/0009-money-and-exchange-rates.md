@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed. Needs the owner’s yes |
+| **Status** | Accepted by #127 |
 | **Written** | 27 Nov 2026, with the architecture baseline (#114) |
 | **Work** | #93, #94, #96, #97 |
 

@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed. Needs the owner’s yes (handbook decisions D1 and D21 are proposed) |
+| **Status** | Accepted by #127. The handbook choices it leans on, D1 and D21, were decided by the owner on 27 Nov 2026 |
 | **Written** | 27 Nov 2026, with the architecture baseline (#114) |
 | **Work** | #60, #119, #123, #124 |
 
