@@ -7,6 +7,11 @@ import { EmptyState } from '../molecules/EmptyState';
 import { InboxRow } from '../organisms/InboxRow';
 import { Button, MetricCard } from '@q-labs/cobalt';
 
+/**
+ * The Inbox page: counts by status and source, the user's forwarding address
+ * with a button to copy it (disabled until they have a token), and a row for
+ * each forwarded email, or an empty state when there are none.
+ */
 export function InboxPage() {
   const { trips, inbox, assignInboxItem, dismissInboxItem, inboxToken } = useApp();
   const [addressCopied, setAddressCopied] = useState(false);

@@ -12,6 +12,12 @@ type Props = {
   isDragging?: boolean;
 };
 
+/**
+ * A trip's card on the pipeline: its cover, destination and region, its dates
+ * (or the rough-dates note), a countdown such as `in 12d`, `in 9w`, `today` or
+ * `active`, category pips, travelers and, for booked and upcoming trips, a
+ * budget bar. It can be dragged between columns when `onDragStart` is given.
+ */
 export function TripCard({ trip, onClick, onDragStart, onDragEnd, isDragging }: Props) {
   let countdown: string | null = null;
   let range: string | null = null;

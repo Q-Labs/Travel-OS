@@ -11,6 +11,7 @@ function iso(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
+/** The Calendar page: a month grid with previous and next controls, showing the trips that fall on each day. Clicking a trip opens it. */
 export function CalendarPage() {
   const { trips } = useApp();
   const navigate = useNavigate();

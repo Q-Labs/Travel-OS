@@ -7,6 +7,11 @@ import type { FetchFn } from './openMeteo';
  */
 const RATES_URL = 'https://api.frankfurter.dev/v1/latest';
 
+/**
+ * Fetches the ECB's latest rates for the given currencies against a base from
+ * Frankfurter. Returns null when the request fails or comes back with no rates,
+ * so a budget just shows in its own currency without a conversion.
+ */
 export async function fetchRates(
   base: string,
   symbols: string[],

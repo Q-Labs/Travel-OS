@@ -115,6 +115,13 @@ function hash(value: string): string {
   return h.toString(36);
 }
 
+/**
+ * Builds the iCalendar text for the calendar feed: an all-day event spanning
+ * each dated trip that is not archived, plus one event for every booking that
+ * has a travel date. Event ids are stable between runs, so a calendar client
+ * updates an event instead of duplicating it. `options.now` is stamped on every
+ * event. The result is the whole document, with CRLF line endings.
+ */
 export function buildCalendar(
   trips: Trip[],
   details: Record<string, TripDetail>,

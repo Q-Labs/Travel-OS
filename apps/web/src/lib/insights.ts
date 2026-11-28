@@ -22,6 +22,7 @@ export type DailyForecast = {
   precipitationProbability: number;
 };
 
+/** What `generateInsights` needs: the trips, each trip's detail and forecast keyed by trip id, and the date to measure from. Passing `today` in keeps the result repeatable. */
 export type GenerateInsightsInput = {
   trips: Trip[];
   details: Record<string, TripDetail>;
@@ -37,6 +38,11 @@ function slugify(value: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+/**
+ * A nudge for a trip that has sat in `dreaming` or `planning` for at least
+ * `STALE_STAGE_DAYS`, or null. Its age comes from the fixtures' counters where
+ * they exist and otherwise from the persisted stage timestamp.
+ */
 export function staleStageInsight(trip: Trip, today: Date): Insight | null {
   if (!STALE_STAGES.includes(trip.stage)) return null;
   // `daysInStage` and `created_days_ago` only exist on the seeded fixtures;
@@ -57,6 +63,12 @@ export function staleStageInsight(trip: Trip, today: Date): Insight | null {
   };
 }
 
+/**
+ * A warning for each passport that expires within `PASSPORT_BUFFER_DAYS` after
+ * the trip ends, and an urgent one for a passport that expires before it ends.
+ * A trip with no end date, or one that is already over, gets none. Ids stay
+ * unique when two passports share a title.
+ */
 export function passportExpiryInsights(trip: Trip, detail: TripDetail, today: Date): Insight[] {
   const end = trip.end_date;
   if (!end) return [];
@@ -90,6 +102,11 @@ export function passportExpiryInsights(trip: Trip, detail: TripDetail, today: Da
   return insights;
 }
 
+/**
+ * A reminder, in the `PACKING_LEAD_DAYS` before departure, that some packing
+ * items are still open. Null when the trip has no start date, is outside that
+ * window, or has everything packed.
+ */
 export function packingReminderInsight(trip: Trip, detail: TripDetail, today: Date): Insight | null {
   if (!trip.start_date) return null;
   const daysOut = daysBetween(today, trip.start_date);
@@ -106,6 +123,11 @@ export function packingReminderInsight(trip: Trip, detail: TripDetail, today: Da
   };
 }
 
+/**
+ * A summary of a trip's forecast: the average high and low, and how many days
+ * are likely wet. It is a warning when more than half the days are wet. Null
+ * when there is no forecast.
+ */
 export function weatherInsight(trip: Trip, daily: DailyForecast[]): Insight | null {
   if (daily.length === 0) return null;
   const avgHigh = Math.round(daily.reduce((sum, d) => sum + d.tempMaxC, 0) / daily.length);
@@ -146,11 +168,6 @@ function shiftDays(from: Date, days: number): Date {
 }
 
 /**
- * The date window to actually ask Open-Meteo about: the part of the trip that
- * is still ahead, clamped to the forecast horizon. Asking for `forecast_days`
- * from today instead would summarise the days *before* departure.
- */
-/**
  * The trips worth forecasting, each paired with the window to ask about.
  *
  * Combining selection and windowing means callers can't end up holding a trip
@@ -168,6 +185,12 @@ export function forecastTargets(
   return targets;
 }
 
+/**
+ * The date window to actually ask Open-Meteo about: the part of the trip that
+ * is still ahead, clamped to the forecast horizon. Asking for `forecast_days`
+ * from today instead would summarise the days *before* departure. Null when
+ * the trip has no start date or none of it falls inside the window.
+ */
 export function forecastRange(
   trip: Trip,
   today: Date,
@@ -182,6 +205,11 @@ export function forecastRange(
   return { startDate, endDate };
 }
 
+/**
+ * Builds every insight for the non-archived trips: stale stage, passport
+ * expiry, packing reminders and weather. Ids are stable, so the same input
+ * gives the same ids and an upsert replaces rows instead of duplicating them.
+ */
 export function generateInsights({ trips, details, forecasts, today }: GenerateInsightsInput): Insight[] {
   const insights: Insight[] = [];
   for (const trip of trips) {

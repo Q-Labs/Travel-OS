@@ -52,7 +52,7 @@ npm run test:e2e               # Playwright (Chromium) integration + visual spec
 npm run test:e2e:ui            # Playwright interactive UI mode
 npm run dev                    # vite dev server (http://localhost:5173)
 npm run build                  # tsc -b + vite build
-npm run lint                   # eslint apps/web/src
+npm run lint                   # eslint apps/web/src: zero warnings, JSDoc on every export
 ```
 
 Two husky hooks gate the work. **`.husky/pre-commit` runs `lint-staged`**, which lints and fixes
@@ -109,6 +109,7 @@ When addressing feedback on a pull request:
 - React functional components only; all state via `useApp()` from `AppContext`
 - UI is built on the **Cobalt design system** (`@q-labs/cobalt`): use its components before writing your own (`components/cobalt-usage.test.ts` guards this) and its tokens for colour, type, radius and shadow. `styles.css` holds only app-specific layout; its legacy names (`--accent`, `--ink`, `--surface`, …) alias Cobalt tokens, so never add a new palette
 - Code outside the MVP is behind a feature flag or removed. A flag is an exported `FLAG_*` constant in `lib/flags.ts`, read from `VITE_FLAG_<NAME>` and off unless it is exactly `true`; components import it and never read `VITE_FLAG_*` themselves. Keep each flag's comparison inline in its own constant (no helper, no object), or the bundler cannot drop the code behind an off flag. Name the owning issue in a comment, and delete the flag when its feature ships or is cut
+- Every export under `apps/web/src` has a JSDoc comment saying what it does and, when it is not obvious, why. No types in it: TypeScript owns them. `npm run lint` fails on a missing one (`eslint-plugin-jsdoc`, handbook D27). Tests and stories are exempt. `@param` and `@returns` tags are not required, because for a component with destructured props they only repeat the type, but a tag you do write needs a description
 - No new dependencies without discussion (`@q-labs/cobalt` is the agreed design-system dependency; installing it needs a `read:packages` token, see README)
 - Commit messages: `type(#issue): short description` (e.g. `feat(#7): add AddTripModal wizard`)
 

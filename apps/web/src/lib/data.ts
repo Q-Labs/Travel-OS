@@ -2,8 +2,10 @@ import type {
   Traveler, Trip, TripDetail, Insight, InboxItem, Integration,
 } from './types';
 
+/** The date the app treats as today. It is fixed so the fixtures' dates stay in step; #134 replaces it with the real date. */
 export const TODAY = new Date('2026-04-20');
 
+/** The fixture travelers. */
 export const TRAVELERS: Traveler[] = [
   { id: 't1', name: 'Quincy', relationship: 'self', initials: 'Q' },
   { id: 't2', name: 'Maren', relationship: 'spouse', initials: 'M' },
@@ -12,6 +14,7 @@ export const TRAVELERS: Traveler[] = [
   { id: 't5', name: 'Dev', relationship: 'friend', initials: 'D' },
 ];
 
+/** The fixture trips: what the pipeline shows when no database is connected, and what first sign-in seeds into a new account. */
 export const TRIPS: Trip[] = [
   // DREAMING
   {
@@ -127,6 +130,7 @@ export const TRIPS: Trip[] = [
   },
 ];
 
+/** The fixture detail for each fixture trip, keyed by trip id. Not every trip has one. */
 export const TRIP_DETAILS: Record<string, TripDetail> = {
   'tr-lisbon': {
     itinerary: [
@@ -330,6 +334,7 @@ export const TRIP_DETAILS: Record<string, TripDetail> = {
   },
 };
 
+/** The fixture insights, shown when no database is connected. */
 export const INSIGHTS: Insight[] = [
   { id: 'i1', trip_id: 'tr-kyoto', type: 'stage_stale', severity: 'info',
     title: 'Kyoto has been dreaming for 6 months', body: 'Ready to pick dates and move to Planning?' },
@@ -343,6 +348,7 @@ export const INSIGHTS: Insight[] = [
     title: 'Catskills forecast: 58°F, showers Sat', body: 'Rain layers + boots suggested. 6 days out.' },
 ];
 
+/** The fixture forwarded emails, shown when no database is connected. */
 export const INBOX: InboxItem[] = [
   {
     id: 'in-1', source: 'email', vendor: 'Airbnb',
@@ -387,6 +393,7 @@ export const INBOX: InboxItem[] = [
   },
 ];
 
+/** The integrations listed on the Integrations screen, including some that are not built yet; #137 removes those rows. */
 export const INTEGRATIONS: Integration[] = [
   { key: 'forward', name: 'Forwarding inbox', desc: 'Forward any confirmation to a dedicated address. Point Postmark, SendGrid or Cloudflare Email Routing at /api/inbox/ingest.', status: 'available', meta: 'POST /api/inbox/ingest' },
   { key: 'calendar', name: 'Calendar export', desc: 'Subscribe to your trips and confirmed bookings as an iCal feed.', status: 'available', meta: '/api/calendar/<token>' },

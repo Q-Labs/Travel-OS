@@ -2,6 +2,11 @@ import { useApp } from '../../app/AppContext';
 import { ACCENTS } from '../../lib/accents';
 import { Icon } from '../atoms/Icon';
 
+/**
+ * The Tweaks panel: switches the theme (light or dark), the accent colour and
+ * the density. It is a prototype control, and `FLAG_TWEAKS` is the switch that
+ * will hide it.
+ */
 export function TweaksPanel() {
   const { theme, setTheme, accent, setAccent, density, setDensity, setTweaksOpen } = useApp();
 

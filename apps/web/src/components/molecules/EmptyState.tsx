@@ -1,3 +1,4 @@
+/** A centred title and a line of text for a list or column that has nothing in it. */
 export function EmptyState({ title, body }: { title: string; body: string }) {
   return (
     <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--ink-3)' }}>

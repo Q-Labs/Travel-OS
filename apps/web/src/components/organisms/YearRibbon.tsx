@@ -3,6 +3,11 @@ import { TODAY } from '../../lib/data';
 import { daysBetween, fmtDateRange } from '../../lib/utils';
 import type { Trip } from '../../lib/types';
 
+/**
+ * A one-year timeline of trips: a bar for each trip that has both dates,
+ * clipped to the year and set on two rows so overlapping trips do not cover each
+ * other, with a marker for today. Clicking a bar opens the trip.
+ */
 export function YearRibbon({ trips, onOpen }: { trips: Trip[]; onOpen: (id: string) => void }) {
   const year = TODAY.getFullYear();
   const start = new Date(year, 0, 1);

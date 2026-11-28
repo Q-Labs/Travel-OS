@@ -1,6 +1,11 @@
 import type { Insight } from '../../lib/types';
 import { Icon } from '../atoms/Icon';
 
+/**
+ * The scrolling strip of insights above the pipeline. Clicking one opens its
+ * trip, when it has one, and its cross dismisses it. Nothing is drawn when there
+ * are no insights.
+ */
 export function InsightsStrip({
   insights,
   onOpen,

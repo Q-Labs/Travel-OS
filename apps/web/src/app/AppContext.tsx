@@ -61,6 +61,12 @@ type AppActions = {
 
 const Ctx = createContext<(AppState & AppActions) | null>(null);
 
+/**
+ * Holds all of the app's state and every action that changes it, and provides
+ * them to the tree. It starts on the fixtures. When Supabase is configured it
+ * swaps in the signed-in user's own data, empties it on sign-out, keeps the
+ * inbox live, and writes each change back through `lib/db.ts`.
+ */
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [trips, setTrips] = useState<Trip[]>(TRIPS);
   const [tripDetails, setTripDetails] = useState<Record<string, TripDetail>>(TRIP_DETAILS);
@@ -237,6 +243,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Reads the app's state and actions. Throws when used outside `AppProvider`. */
 export function useApp() {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error('useApp must be used within AppProvider');

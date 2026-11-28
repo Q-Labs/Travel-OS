@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-// The signed-out frame: a pitch on the left, the form on the right.
+/** The signed-out frame: a pitch on the left and the form on the right. */
 export function AuthLayout({ aside, children }: { aside: ReactNode; children: ReactNode }) {
   return (
     <div className="login-shell">

@@ -2,6 +2,7 @@ import { Button, Input, Topbar as CobaltTopbar } from '@q-labs/cobalt';
 import { useApp } from '../../app/AppContext';
 import { Icon } from '../atoms/Icon';
 
+/** The page header: a title with a line under it, the trip search box and the New trip button. */
 export function Topbar({ title, subtitle }: { title: string; subtitle: string }) {
   const { search, setSearch, setShowModal } = useApp();
   return (

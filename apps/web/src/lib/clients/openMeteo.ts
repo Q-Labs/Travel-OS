@@ -14,6 +14,7 @@ const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
  */
 export type FetchFn = (input: string, init?: RequestInit) => Promise<Response>;
 
+/** A place found by name: where it is, the country and region it is in, and its timezone. `region` is empty when Open-Meteo gives none. */
 export type GeocodeResult = {
   lat: number;
   lon: number;
@@ -37,6 +38,11 @@ type DailyBlock = {
   precipitation_probability_max: (number | null)[];
 };
 
+/**
+ * Looks a place name up and returns its first match, or null when there is none
+ * or the request fails. A geocoding outage should degrade insights, not fail
+ * the whole refresh.
+ */
 export async function geocode(name: string, fetchFn: FetchFn): Promise<GeocodeResult | null> {
   try {
     const res = await fetchFn(`${GEOCODE_URL}?name=${encodeURIComponent(name)}&count=1`);
@@ -57,6 +63,11 @@ export async function geocode(name: string, fetchFn: FetchFn): Promise<GeocodeRe
   }
 }
 
+/**
+ * Fetches a daily forecast for a place over a date range. It asks about the
+ * trip's own dates, not the next few days from now. Returns no days when the
+ * request fails or has no data.
+ */
 export async function fetchForecast(
   lat: number,
   lon: number,

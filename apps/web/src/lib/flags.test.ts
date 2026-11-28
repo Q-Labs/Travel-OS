@@ -16,6 +16,11 @@ afterEach(() => {
 // test shows up in the first assertion below.
 async function loadFlags(env: Record<string, string | undefined> = {}) {
   vi.resetModules();
+  // Start from no flags at all. A flag a developer has set in the shell or in
+  // a .env file would otherwise leak into every case that does not set it.
+  for (const name of Object.keys(import.meta.env)) {
+    if (name.startsWith('VITE_FLAG_')) vi.stubEnv(name, undefined);
+  }
   for (const [name, value] of Object.entries(env)) vi.stubEnv(name, value);
   return { ...(await import('./flags')) };
 }
@@ -72,7 +77,7 @@ describe('where flags are read', () => {
     expect(flagLines.length).toBeGreaterThan(0);
     for (const index of flagLines) {
       const above = lines[index - 1]?.trim() ?? '';
-      expect(above, `no owning issue above: ${lines[index]?.trim()}`).toMatch(/^\/\/.*#\d+/);
+      expect(above, `no owning issue above: ${lines[index]?.trim()}`).toMatch(/^(\/\/|\/\*\*).*#\d+/);
     }
   });
 });

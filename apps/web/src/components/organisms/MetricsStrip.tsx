@@ -4,6 +4,13 @@ import { daysBetween, fmtDate } from '../../lib/utils';
 import type { Trip } from '../../lib/types';
 import { MetricCard } from '@q-labs/cobalt';
 
+/**
+ * The row of summary cards above the pipeline: the next trip and how far away
+ * it is, active plans, this year's spend and trips in motion. Spend counts only
+ * trips budgeted in the home currency, since mixed currencies cannot be added,
+ * and is shown against an annual target that is hard-coded for now (#137
+ * removes it).
+ */
 export function MetricsStrip({ trips }: { trips: Trip[] }) {
   const upcoming = trips
     .filter((t) => t.start_date && daysBetween(TODAY, t.start_date) >= 0)

@@ -12,6 +12,10 @@ const EMPTY_DETAIL: TripDetail = {
   documents: [],
 };
 
+/**
+ * The page for one trip, found by the id in the URL. An unknown id shows "Trip
+ * not found", and a trip with no detail row yet gets an empty one.
+ */
 export function TripDetailPage() {
   const { trips, tripDetails, updateTrip, togglePacked, toggleBookingStatus } = useApp();
   const { tripId } = useParams() as { tripId: string };

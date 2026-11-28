@@ -20,6 +20,11 @@ function nextBookingStatus(status: BookingStatus): BookingStatus {
   return 'todo';
 }
 
+/**
+ * A trip's bookings, filterable by category and by source. Each booking has a
+ * control that steps its status from to-do to pending to done and back round
+ * again. Costs show in the trip's currency.
+ */
 export function BookingsPanel({
   detail,
   tripId,

@@ -9,9 +9,12 @@
  * whole inbound path be tested without an account anywhere.
  */
 
+/** The inbound-email providers whose webhooks can be read. */
 export const SUPPORTED_PROVIDERS = ['postmark', 'sendgrid', 'cloudflare'] as const;
+/** The name of one supported provider. */
 export type Provider = (typeof SUPPORTED_PROVIDERS)[number];
 
+/** An inbound email flattened to the one shape the ingest function reads, whichever provider sent it. `receivedAt` is empty when the provider gave no date. */
 export type NormalizedEmail = {
   from: string;
   to: string;
@@ -20,6 +23,7 @@ export type NormalizedEmail = {
   receivedAt: string;
 };
 
+/** Whether a name is a provider this module can read. It also narrows the type for the compiler. */
 export function isSupportedProvider(value: string): value is Provider {
   return (SUPPORTED_PROVIDERS as readonly string[]).includes(value);
 }
@@ -44,6 +48,11 @@ function str(source: Record<string, unknown>, ...keys: string[]): string | undef
   return undefined;
 }
 
+/**
+ * Flattens a provider's webhook payload into a `NormalizedEmail`. Returns null
+ * when the provider is not supported or the payload has no sender, recipient,
+ * subject or body.
+ */
 export function normalizeInboundEmail(provider: string, payload: unknown): NormalizedEmail | null {
   if (!isSupportedProvider(provider)) return null;
   if (!payload || typeof payload !== 'object') return null;

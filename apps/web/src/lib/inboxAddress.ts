@@ -7,4 +7,5 @@
  * a deployment actually uses.
  */
 export const INBOX_DOMAIN = import.meta.env['VITE_INBOX_DOMAIN'] ?? 'travelos.app';
+/** The mailbox name before the plus-tag, from `VITE_INBOX_MAILBOX`. */
 export const INBOX_MAILBOX = import.meta.env['VITE_INBOX_MAILBOX'] ?? 'trips';

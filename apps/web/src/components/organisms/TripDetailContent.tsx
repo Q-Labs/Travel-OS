@@ -43,6 +43,12 @@ function getStoredTripTab(tripId: string): TripDetailTab {
   return saved && TAB_ORDER.some((item) => item.key === saved) ? saved : 'overview';
 }
 
+/**
+ * The body of a trip's page: a hero with the trip's facts, then tabs for the
+ * overview, itinerary, bookings, budget, packing, documents and notes. Notes
+ * save when their field loses focus, and only if they changed. The browser
+ * remembers the selected tab for each trip.
+ */
 export function TripDetailContent({
   trip,
   tripId,

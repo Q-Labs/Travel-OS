@@ -1,6 +1,7 @@
 import { Avatar } from '@q-labs/cobalt';
 import { TRAVELERS } from '../../lib/data';
 
+/** A row of traveler avatars for the given ids, up to `max` of them, with a `+n` for the rest. Ids that match no known traveler are skipped. */
 export function Avatars({ ids, max = 4 }: { ids: string[]; max?: number }) {
   const items = ids.map((id) => TRAVELERS.find((t) => t.id === id)).filter(Boolean) as typeof TRAVELERS;
   const shown = items.slice(0, max);
