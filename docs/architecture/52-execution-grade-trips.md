@@ -2,7 +2,7 @@
 
 What changes underneath the app to build #52, why, and in what order. The starting point is [`../architecture.md`](../architecture.md). Each choice here has a short record in [`../decisions/`](../decisions/README.md).
 
-**Status: proposed.** Nothing here is built. It becomes the plan when the owner accepts the decision records.
+**Status: accepted** by #127 on 27 Nov 2026. Nothing here is built yet.
 
 ## The plan on one page
 
@@ -275,7 +275,7 @@ Workstream 3 (the ledger) needs only waves 0 to 2. It can start while waves 3 an
 | Risk or gap | Effect | Settled by |
 | --- | --- | --- |
 | How Deno imports pure modules that the Vite app also imports (file extensions, files outside `supabase/functions/`) | Decides where the shared code lives | #120, the first function |
-| How Edge Functions are deployed from the release workflow | The handbook lists it as open (O3) | #120 |
+| How Edge Functions are deployed from the release workflow | The handbook decided that the release workflow does it (O3). The steps are not written anywhere yet | #120 |
 | What a hibernating free-tier project does with a scheduled job and an inbound call | If it sleeps through them, the daily job and the calendar feed are unreliable on the free plan | #122 |
 | Netlify proxying `/api/calendar/<token>` to a Supabase function address, with private caching intact | If it cannot, the feed is a Netlify Function instead (the handbook's stated exception) | #120, #123 |
 | Frankfurter's dated-rate endpoint and how far back it goes | Decides the "rate unavailable" state in #96 | #96 |

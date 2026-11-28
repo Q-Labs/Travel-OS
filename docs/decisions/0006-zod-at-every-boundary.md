@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| **Status** | Proposed. Needs the owner’s yes (a new dependency; the handbook rule is adopted) |
+| **Status** | Accepted by #127, including the new dependency. The handbook rule is adopted |
 | **Written** | 27 Nov 2026, with the architecture baseline (#114) |
 | **Work** | #117, #41 |
 
