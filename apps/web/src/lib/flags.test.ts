@@ -12,35 +12,37 @@ afterEach(() => {
   vi.resetModules();
 });
 
+// The module namespace, copied to a plain object so a flag added without a
+// test shows up in the first assertion below.
 async function loadFlags(env: Record<string, string | undefined> = {}) {
   vi.resetModules();
   for (const [name, value] of Object.entries(env)) vi.stubEnv(name, value);
-  return (await import('./flags')).FLAGS;
+  return { ...(await import('./flags')) };
 }
 
-describe('FLAGS', () => {
+describe('flags', () => {
   it('has every flag off when no value is set', async () => {
     const flags = await loadFlags({ VITE_FLAG_TWEAKS: undefined, VITE_FLAG_SIGNIN_GOOGLE: undefined });
-    expect(flags).toEqual({ tweaks: false, signinGoogle: false });
+    expect(flags).toEqual({ FLAG_TWEAKS: false, FLAG_SIGNIN_GOOGLE: false });
   });
 
   it('turns on only the flag that is set to true', async () => {
     const flags = await loadFlags({ VITE_FLAG_TWEAKS: 'true' });
-    expect(flags.tweaks).toBe(true);
-    expect(flags.signinGoogle).toBe(false);
+    expect(flags.FLAG_TWEAKS).toBe(true);
+    expect(flags.FLAG_SIGNIN_GOOGLE).toBe(false);
   });
 
   it('reads each flag from its own variable', async () => {
     const flags = await loadFlags({ VITE_FLAG_SIGNIN_GOOGLE: 'true' });
-    expect(flags.signinGoogle).toBe(true);
-    expect(flags.tweaks).toBe(false);
+    expect(flags.FLAG_SIGNIN_GOOGLE).toBe(true);
+    expect(flags.FLAG_TWEAKS).toBe(false);
   });
 
   it.each(['TRUE', 'True', '1', 'yes', 'on', 'false', ' true', ''])(
     'keeps a flag off when its value is %j rather than exactly "true"',
     async (value) => {
       const flags = await loadFlags({ VITE_FLAG_TWEAKS: value });
-      expect(flags.tweaks).toBe(false);
+      expect(flags.FLAG_TWEAKS).toBe(false);
     },
   );
 });
@@ -66,7 +68,7 @@ describe('where flags are read', () => {
 
   it('names the issue that owns every flag in a comment beside it', () => {
     const lines = readFileSync(join(__dirname, 'flags.ts'), 'utf8').split('\n');
-    const flagLines = lines.flatMap((line, index) => (/^\s+\w+:\s*isOn\(/.test(line) ? [index] : []));
+    const flagLines = lines.flatMap((line, index) => (/^export const FLAG_\w+ =/.test(line) ? [index] : []));
     expect(flagLines.length).toBeGreaterThan(0);
     for (const index of flagLines) {
       const above = lines[index - 1]?.trim() ?? '';
