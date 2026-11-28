@@ -2,6 +2,7 @@ import { fmtMoney } from '../../lib/utils';
 import type { ParsedInbox } from '../../lib/types';
 import { BOOKING_ICONS, Icon } from '../atoms/Icon';
 
+/** What the parser read out of a forwarded email: its title with an icon for its kind, the cost when there is one, the dates, the confirmation code and any note. */
 export function ParsedCard({ parsed }: { parsed: ParsedInbox }) {
   const ParsedIcon = BOOKING_ICONS[parsed.type] ?? Icon.MoreH;
   return (

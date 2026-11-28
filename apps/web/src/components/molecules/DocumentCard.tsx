@@ -2,6 +2,7 @@ import { TODAY } from '../../lib/data';
 import { daysBetween, fmtDate } from '../../lib/utils';
 import type { TripDocument } from '../../lib/types';
 
+/** A card for one travel document: its type, title and expiry. It warns when the document expires within six months of the app's `TODAY`, the buffer most Schengen-style rules want on a passport. */
 export function DocumentCard({ document }: { document: TripDocument }) {
   const expiryDays = document.expiry ? daysBetween(TODAY, document.expiry) : null;
   const warn = expiryDays !== null && expiryDays < 183;

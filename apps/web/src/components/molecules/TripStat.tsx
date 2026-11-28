@@ -1,5 +1,6 @@
 import { ProgressMini } from '@q-labs/cobalt';
 
+/** One figure on a trip: a label and its value, with an optional smaller line under it and an optional progress bar. */
 export function TripStat({
   label,
   value,
