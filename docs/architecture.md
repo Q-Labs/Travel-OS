@@ -231,8 +231,6 @@ Stack-level gaps only. Each has an issue.
 | JSDoc on every export, enforced by `eslint-plugin-jsdoc` (D27) | The plugin is not in the lint. Comments are written where the author chose to | #129 |
 | `docs/architecture.md` | This page | #114 |
 
-Not a handbook gap, but in the way: seven prototype files at the repository root that nothing imports (#126).
-
 ## Not verified
 
 | What | Why not | What would settle it |
