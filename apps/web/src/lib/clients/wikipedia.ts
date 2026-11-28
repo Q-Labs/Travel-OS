@@ -15,6 +15,10 @@ const SUMMARY_URL = 'https://en.wikipedia.org/api/rest_v1/page/summary';
  */
 const USER_AGENT = 'Travel OS (https://github.com/Q-Labs/Travel-OS)';
 
+/**
+ * A short description of a destination from Wikipedia. The text is CC BY-SA, so
+ * wherever `extract` is shown, the link to `url` must be visible beside it.
+ */
 export type DestinationSummary = {
   title: string;
   extract: string;
@@ -30,6 +34,11 @@ type SummaryPayload = {
   content_urls?: { desktop?: { page: string } };
 };
 
+/**
+ * Fetches a destination's Wikipedia summary. Returns null for a disambiguation
+ * page, a page with no text, or a failed request, since a trip overview reads
+ * fine without a blurb.
+ */
 export async function fetchDestinationSummary(
   name: string,
   fetchFn: FetchFn,
