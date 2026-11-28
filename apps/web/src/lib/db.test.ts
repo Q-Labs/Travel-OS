@@ -609,6 +609,85 @@ describe('seedFromFixtures', () => {
   });
 });
 
+describe('seedFromFixtures writes and failures', () => {
+  const trip: Trip = {
+    id: 'tr-1', destination: 'Rome', region: 'Lazio', country: 'Italy',
+    stage: 'dreaming', categories: ['couple'], start_date: null, end_date: null,
+    date_approx: null, budget_total: 5000, budget_spent: 0, budget_currency: 'USD',
+    travelers: ['t1'], cover: { hue: 30, label: 'terra' }, notes: '', nights: 7,
+  };
+  const data = {
+    trips: [trip],
+    tripDetails: { 'tr-1': { itinerary: [], bookings: [], budget_breakdown: [], packing: [], documents: [] } as TripDetail },
+    insights: [] as Insight[],
+    inbox: [] as InboxItem[],
+    travelers: [{ id: 't1', name: 'Quincy', relationship: 'self', initials: 'Q' }] as Traveler[],
+  };
+
+  // A client for a user with no trips. Each upsert takes a moment and records
+  // when it starts and finishes, so the order of the writes can be checked, and
+  // a table named in `failures` answers with that error.
+  function seedingClient(failures: Record<string, string> = {}) {
+    const events: string[] = [];
+    mockFrom.mockImplementation((table: string) => ({
+      select: () => ({ eq: () => Promise.resolve({ count: 0 }) }),
+      upsert: async () => {
+        events.push(`start:${table}`);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        events.push(`done:${table}`);
+        const message = failures[table];
+        return { error: message ? { message } : null };
+      },
+    }));
+    return events;
+  }
+
+  it('writes the trips before the details that point at them', async () => {
+    // trip_details has a foreign key to trips, so a details write that starts
+    // before the trips are in can be rejected.
+    const events = seedingClient();
+    await seedFromFixtures('u1', data);
+    expect(events.indexOf('done:trips')).toBeGreaterThanOrEqual(0);
+    expect(events.indexOf('done:trips')).toBeLessThan(events.indexOf('start:trip_details'));
+  });
+
+  it('writes every table when nothing fails', async () => {
+    const events = seedingClient();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await seedFromFixtures('u1', data);
+    expect(events.filter((e) => e.startsWith('done:')).sort()).toEqual(
+      ['done:inbox_items', 'done:insights', 'done:travelers', 'done:trip_details', 'done:trips'],
+    );
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('reports a failed write, naming the table and the message', async () => {
+    seedingClient({ trip_details: 'violates foreign key constraint' });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await seedFromFixtures('u1', data);
+    expect(warn).toHaveBeenCalledWith('[db] seedFromFixtures trip_details:', 'violates foreign key constraint');
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports every failed write, not just the first', async () => {
+    seedingClient({ insights: 'denied by policy', inbox_items: 'timeout' });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await seedFromFixtures('u1', data);
+    expect(warn).toHaveBeenCalledWith('[db] seedFromFixtures insights:', 'denied by policy');
+    expect(warn).toHaveBeenCalledWith('[db] seedFromFixtures inbox_items:', 'timeout');
+  });
+
+  it('stops after a failed trips write, so nothing is left pointing at trips that are not there', async () => {
+    const events = seedingClient({ trips: 'connection reset' });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    await seedFromFixtures('u1', data);
+    expect(warn).toHaveBeenCalledWith('[db] seedFromFixtures trips:', 'connection reset');
+    expect(events).not.toContain('start:trip_details');
+    expect(events).not.toContain('start:insights');
+    expect(events).not.toContain('start:inbox_items');
+  });
+});
+
 describe('fetchInboxToken', () => {
   it('returns the token for a user', async () => {
     mockFrom.mockReturnValue(makeChain({ data: { token: 'a1b2c3' }, error: null }));
