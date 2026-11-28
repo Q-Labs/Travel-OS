@@ -1,10 +1,15 @@
 import type { Preview } from '@storybook/react-vite';
+import { sb } from 'storybook/test';
 import { MemoryRouter } from 'react-router-dom';
 import '@q-labs/cobalt/styles.css';
 import '../apps/web/src/styles.css';
 import { AppProvider } from '../apps/web/src/app/AppContext';
 import type { InitialAppData } from '../apps/web/src/app/AppContext';
 import { CobaltRoot } from '../apps/web/src/app/CobaltRoot';
+
+// lib/db talks to Supabase. Its functions keep their real behaviour (a spy), so
+// a story can make one answer as it likes with mocked(fn).mockResolvedValue(...).
+sb.mock(import('../apps/web/src/lib/db.ts'), { spy: true });
 
 declare module 'storybook/internal/csf' {
   interface Parameters {
