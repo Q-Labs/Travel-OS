@@ -3,6 +3,7 @@ dist/
 coverage/
 *.tsbuildinfo
 playwright-report/
+storybook-static/
 e2e/test-results/
 
 # Local environment: never commit secrets
