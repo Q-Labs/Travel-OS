@@ -196,6 +196,18 @@ describe('createInsightsHandler', () => {
     expect(rows.map((r) => r.id)).toEqual(['pack-tr-lisbon']);
   });
 
+  it('still writes the other insights when the forecast comes back empty', async () => {
+    const forecastFails = vi.fn(async (url: string) =>
+      url.includes('geocoding-api') ? okForecast()(url) : ({ ok: false, json: async () => ({}) }) as Response,
+    );
+    const { client, upsert } = makeSupabase();
+    const handler = createInsightsHandler({ supabase: client, fetchFn: forecastFails, now });
+    const res = await handler(post(undefined, { userId: 'u1' }));
+    expect(res.status).toBe(200);
+    const rows = upsert.mock.calls[0]?.[0] as { id: string }[];
+    expect(rows.map((r) => r.id)).toEqual(['pack-tr-lisbon']);
+  });
+
   it('skips the upsert entirely when nothing is worth reporting', async () => {
     const { client, upsert } = makeSupabase({
       trips: { data: [{ ...TRIP_ROW, start_date: '2027-01-01', end_date: '2027-01-10' }], error: null },

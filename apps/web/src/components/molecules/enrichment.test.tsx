@@ -68,6 +68,17 @@ describe('BudgetConversion', () => {
     await waitFor(() => expect(fetchRates).toHaveBeenCalled());
     expect(screen.queryByText(/\$2,000/)).not.toBeInTheDocument();
   });
+
+  it('hands the rates client the global fetch to call', async () => {
+    const globalFetch = vi.fn().mockResolvedValue(new Response('{}'));
+    vi.stubGlobal('fetch', globalFetch);
+    fetchRates.mockImplementation(async (_base: string, _symbols: string[], get: typeof fetch) => {
+      await get('https://rates.example/latest', { method: 'GET' });
+      return null;
+    });
+    render(<BudgetConversion trip={makeTrip()} />);
+    await waitFor(() => expect(globalFetch).toHaveBeenCalledWith('https://rates.example/latest', { method: 'GET' }));
+  });
 });
 
 describe('DestinationBlurb', () => {
@@ -125,5 +136,16 @@ describe('DestinationBlurb', () => {
     resolve(SUMMARY);
     await waitFor(() => expect(fetchDestinationSummary).toHaveBeenCalled());
     expect(screen.queryByText(SUMMARY.extract)).not.toBeInTheDocument();
+  });
+
+  it('hands the summary client the global fetch to call', async () => {
+    const globalFetch = vi.fn().mockResolvedValue(new Response('{}'));
+    vi.stubGlobal('fetch', globalFetch);
+    fetchDestinationSummary.mockImplementation(async (_destination: string, get: typeof fetch) => {
+      await get('https://wiki.example/summary', { method: 'GET' });
+      return null;
+    });
+    render(<DestinationBlurb destination="Lisbon" />);
+    await waitFor(() => expect(globalFetch).toHaveBeenCalledWith('https://wiki.example/summary', { method: 'GET' }));
   });
 });

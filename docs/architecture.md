@@ -193,8 +193,8 @@ Coverage is measured over `app/`, `components/`, `lib/` and `api/`. Five files a
 | --- | --- | --- |
 | Node | 24 | 24 |
 | React | 18 | 19 |
-| Vite | 5 | 8 |
-| Vitest | 2 | 5 |
+| Vite | 8 | 8 |
+| Vitest | 5 | 5 |
 | ESLint | 10, flat config | 10 |
 | React Router | 6 | Stays; TanStack Router is for new apps |
 | Cobalt | 0.3 | 0.3 (0.4 is published) |
@@ -226,7 +226,6 @@ Stack-level gaps only. Each has an issue.
 | Failures returned as data | The data layer logs and returns nothing | #118 |
 | Security headers and a Content-Security-Policy | None in the repository | #123 |
 | End-to-end tests against the built output | Against the dev server | #119, #106 |
-| Tools within one major of the baseline | Vite and Vitest are three behind | #125 |
 | Storybook 10, with a story file for every component, built in CI (D26) | No Storybook. 36 components, no story file | #128 |
 | JSDoc on every export, enforced by `eslint-plugin-jsdoc` (D27) | The plugin is not in the lint. Comments are written where the author chose to | #129 |
 | `docs/architecture.md` | This page | #114 |
