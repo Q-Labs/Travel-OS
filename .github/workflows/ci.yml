@@ -20,12 +20,9 @@ jobs:
           scope: '@q-labs'
       - run: npm ci
         env:
-          # COBALT_PACKAGES_TOKEN: a token with read:packages (handbook secret
-          # name). Until the owner creates it, fall back to the old NPM_TOKEN
-          # (a PAT that can read the package), then GITHUB_TOKEN, which works
-          # only once the package grants this repository access. Drop both
-          # fallbacks once the secret is set (#59).
-          NODE_AUTH_TOKEN: ${{ secrets.COBALT_PACKAGES_TOKEN || secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
+          # COBALT_PACKAGES_TOKEN: a token with read:packages. The built-in
+          # GITHUB_TOKEN cannot read a package owned by another account.
+          NODE_AUTH_TOKEN: ${{ secrets.COBALT_PACKAGES_TOKEN }}
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:coverage
@@ -49,12 +46,9 @@ jobs:
           scope: '@q-labs'
       - run: npm ci
         env:
-          # COBALT_PACKAGES_TOKEN: a token with read:packages (handbook secret
-          # name). Until the owner creates it, fall back to the old NPM_TOKEN
-          # (a PAT that can read the package), then GITHUB_TOKEN, which works
-          # only once the package grants this repository access. Drop both
-          # fallbacks once the secret is set (#59).
-          NODE_AUTH_TOKEN: ${{ secrets.COBALT_PACKAGES_TOKEN || secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
+          # COBALT_PACKAGES_TOKEN: a token with read:packages. The built-in
+          # GITHUB_TOKEN cannot read a package owned by another account.
+          NODE_AUTH_TOKEN: ${{ secrets.COBALT_PACKAGES_TOKEN }}
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
       - name: Run Playwright tests

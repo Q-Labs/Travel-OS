@@ -52,8 +52,8 @@ It is published to GitHub Packages, so installing needs a token:
    ```
 3. `npm ci`.
 
-**CI** reads the token from the `NPM_TOKEN` repository secret (a PAT with `read:packages`), or falls back to
-`GITHUB_TOKEN` when the package grants this repository access (package settings → *Manage Actions access*).
+**CI** reads the token from the `COBALT_PACKAGES_TOKEN` repository secret (a token with `read:packages`). The
+built-in `GITHUB_TOKEN` cannot read a package owned by another account, so there is no fallback.
 **Vercel** needs an `NPM_RC` environment variable containing the two `.npmrc` lines above, with the real token.
 
 How it is used:

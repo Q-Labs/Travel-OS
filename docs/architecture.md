@@ -225,7 +225,7 @@ Stack-level gaps only. Each has an issue.
 | Model calls behind a provider adapter with a mock; model name from configuration | The SDK is called directly and the model name is in the handler | #121 |
 | Failures returned as data | The data layer logs and returns nothing | #118 |
 | Security headers and a Content-Security-Policy | None in the repository | #123 |
-| CI secret name, issue forms, pull-request template, verify skill | Filed by the handbook audit. CI still falls back to the old `NPM_TOKEN` secret until the owner sets `COBALT_PACKAGES_TOKEN` | #59, #61, #62, #63 |
+| Issue forms, pull-request template, verify skill | Filed by the handbook audit | #61, #62, #63 |
 | End-to-end tests against the built output | Against the dev server | #119, #106 |
 | Tools within one major of the baseline | Vite and Vitest are three behind | #125 |
 | Storybook 10, with a story file for every component, built in CI (D26) | No Storybook. 36 components, no story file | #128 |
