@@ -25,7 +25,7 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 | Weather / geocoding | [Open-Meteo](https://open-meteo.com) — no API key, no account |
 | Exchange rates | [Frankfurter](https://frankfurter.dev) (ECB reference rates) — no API key |
 | Destination context | [Wikipedia REST API](https://en.wikipedia.org/api/rest_v1/) — no API key |
-| Unit tests | Vitest + Testing Library (100% branch coverage enforced) |
+| Unit tests | Vitest + Testing Library (100% branch coverage enforced by `npm run test:coverage`) |
 | E2E / visual tests | Playwright (Chromium, with screenshot regression) |
 | Design system | [Cobalt](https://github.com/Q-Labs/cobalt) (`@q-labs/cobalt`): Quincy OS tokens + components |
 | Styling | App CSS on top of Cobalt's design tokens |
@@ -52,8 +52,8 @@ It is published to GitHub Packages, so installing needs a token:
    ```
 3. `npm ci`.
 
-**CI** reads the token from the `NPM_TOKEN` repository secret (a PAT with `read:packages`), or falls back to
-`GITHUB_TOKEN` when the package grants this repository access (package settings → *Manage Actions access*).
+**CI** reads the token from the `COBALT_PACKAGES_TOKEN` repository secret (a token with `read:packages`). The
+built-in `GITHUB_TOKEN` cannot read a package owned by another account, so there is no fallback.
 **Vercel** needs an `NPM_RC` environment variable containing the two `.npmrc` lines above, with the real token.
 
 How it is used:
@@ -226,7 +226,9 @@ Both values are available in your Supabase project under **Settings → API**.
 | `npm run dev` | Vite dev server with hot reload |
 | `npm run build` | TypeScript check + Vite build → `dist/` |
 | `npm run lint` | ESLint over `apps/web/src` |
-| `npm test` | Vitest with v8 coverage (100% required, fails CI if below) |
+| `npm run typecheck` | `tsc --noEmit` over the app, tests and `api/` |
+| `npm test` | Vitest, one run, no coverage (the fast loop) |
+| `npm run test:coverage` | Vitest with v8 coverage (100% required; the gate that the pre-push hook and CI run) |
 | `npm run test:watch` | Vitest in watch mode |
 | `npm run test:e2e` | Playwright integration + visual tests (Chromium) |
 | `npm run test:e2e:ui` | Playwright in interactive UI mode |

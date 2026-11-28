@@ -172,7 +172,7 @@ The model's reply is parsed as JSON and cast to a type. It is not validated agai
 
 ```mermaid
 flowchart LR
-    push["git push<br/><i>husky: lint, test with coverage, build</i>"] --> ci["ci.yml on every branch<br/>lint → test with coverage → build<br/>then Playwright"]
+    commit["git commit<br/><i>husky: lint-staged</i>"] --> push["git push<br/><i>husky: typecheck, test with coverage</i>"] --> ci["ci.yml on every branch<br/>lint → typecheck → test with coverage → build<br/>then Playwright"]
     ci -->|"main only"| pages["Playwright report<br/>to GitHub Pages"]
     merge(["merge to main"]) -. "Git integration" .-> vercel["Vercel builds and deploys"]
     sql["supabase/migrations/*.sql"] -. "by hand" .-> db[("Live database")]
@@ -180,8 +180,9 @@ flowchart LR
 
 | Gate | Runs | What it checks |
 | --- | --- | --- |
-| pre-push hook | Locally | `npm run lint && npm test && npm run build`. There is no pre-commit hook |
-| CI `check` | Every push and pull request | Lint, unit tests with 100% coverage on all four measures, build |
+| pre-commit hook | Locally | `lint-staged`: ESLint with `--fix` on the staged files under `apps/web/src` |
+| pre-push hook | Locally | `npm run typecheck && npm run test:coverage` |
+| CI `check` | Every push and pull request, on the Node in `.nvmrc` | Lint, typecheck, unit tests with 100% coverage on all four measures, build |
 | CI `playwright` | After `check` | Integration specs and nine visual snapshots, Chromium, 1280 × 800, against the dev server with a dev-only sign-in bypass |
 | Deploy | Outside the repository | Vercel's own build. CI does not gate it |
 | Migrations | Nowhere | No job applies or tests them |
@@ -224,7 +225,7 @@ Stack-level gaps only. Each has an issue.
 | Model calls behind a provider adapter with a mock; model name from configuration | The SDK is called directly and the model name is in the handler | #121 |
 | Failures returned as data | The data layer logs and returns nothing | #118 |
 | Security headers and a Content-Security-Policy | None in the repository | #123 |
-| Script names, hooks, CI on the pinned Node, CI secret name, issue forms, pull-request template, verify skill | Filed by the handbook audit | #54 to #63 |
+| Issue forms, pull-request template, verify skill | Filed by the handbook audit | #61, #62, #63 |
 | End-to-end tests against the built output | Against the dev server | #119, #106 |
 | Tools within one major of the baseline | Vite and Vitest are three behind | #125 |
 | Storybook 10, with a story file for every component, built in CI (D26) | No Storybook. 36 components, no story file | #128 |
