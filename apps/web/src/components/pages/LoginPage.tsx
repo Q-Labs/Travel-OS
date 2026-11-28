@@ -16,6 +16,12 @@ const MOSAIC_TILES = [
   { label: 'Marrakech', hue: 12 },
 ];
 
+/**
+ * The sign-in page: email with a magic link or a password, plus the outside
+ * provider buttons, beside a mosaic of destinations. It shows a confirmation
+ * once a link is sent, or the error, and disables every sign-in control while
+ * one is in flight so two flows cannot race.
+ */
 export function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');

@@ -12,17 +12,28 @@ import { TweaksPanel } from '../organisms/TweaksPanel';
 
 type OutletCtx = { trips: Trip[] };
 
+/**
+ * Formats a UTC-midnight date as a long calendar date, such as `April 20, 2026`.
+ * It uses the calendar day the date names, not the local day, which would show
+ * the day before in a timezone behind UTC.
+ */
 export function localDateLabel(utcDate: Date): string {
   return new Date(utcDate.getUTCFullYear(), utcDate.getUTCMonth(), utcDate.getUTCDate())
     .toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
+/** The greeting for an hour of the day: morning before noon, afternoon before 6pm, evening after. It defaults to the current hour. */
 export function greeting(h = new Date().getHours()) {
   if (h < 12) return 'Good morning';
   if (h < 18) return 'Good afternoon';
   return 'Good evening';
 }
 
+/**
+ * The signed-in frame: the sidebar, a top bar whose title and subtitle depend
+ * on the page, the page itself, and the new-trip dialog, the integrations
+ * dialog and the tweaks panel while they are open.
+ */
 export function AppLayout() {
   const { trips, inbox, showModal, showIntegrations, tweaksOpen } = useApp();
   const { pathname } = useLocation();

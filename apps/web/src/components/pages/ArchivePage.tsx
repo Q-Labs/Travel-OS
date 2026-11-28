@@ -6,6 +6,10 @@ import { MetricCard } from '@q-labs/cobalt';
 import { EmptyState } from '../molecules/EmptyState';
 import { TripCard } from '../organisms/TripCard';
 
+/**
+ * The Archive page: lifetime figures (trips, countries, days traveled and spend
+ * in the home currency) and the archived trips grouped by year, newest first.
+ */
 export function ArchivePage() {
   const { trips } = useApp();
   const navigate = useNavigate();

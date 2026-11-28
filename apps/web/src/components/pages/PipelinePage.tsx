@@ -8,6 +8,11 @@ import { KanbanBoard } from '../organisms/KanbanBoard';
 import { MetricsStrip } from '../organisms/MetricsStrip';
 import { YearRibbon } from '../organisms/YearRibbon';
 
+/**
+ * The pipeline page: the summary cards, the year ribbon, the insights strip and
+ * the board of trips that are not archived. The category filters in force show
+ * as chips that can be removed or cleared.
+ */
 export function PipelinePage() {
   const {
     trips, searchedTrips, insights,
