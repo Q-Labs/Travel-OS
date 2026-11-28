@@ -8,6 +8,7 @@ import {
   passportExpiryInsights,
   staleStageInsight,
   forecastRange,
+  forecastTargets,
   tripsNeedingForecast,
   weatherInsight,
 } from './insights';
@@ -257,6 +258,21 @@ describe('tripsNeedingForecast', () => {
   });
 });
 
+describe('forecastTargets', () => {
+  it('leaves out a trip whose dates leave no window to ask about', () => {
+    // Selected as near enough, but it ends before it starts, so there is nothing to forecast.
+    const trip = makeTrip({ start_date: '2026-04-25', end_date: '2026-04-22' });
+    expect(forecastTargets([trip], TODAY)).toEqual([]);
+  });
+
+  it('pairs a near trip with the dates to ask about', () => {
+    const trip = makeTrip({ start_date: '2026-04-25', end_date: '2026-04-28' });
+    expect(forecastTargets([trip], TODAY)).toEqual([
+      { trip, range: { startDate: '2026-04-25', endDate: '2026-04-28' } },
+    ]);
+  });
+});
+
 describe('generateInsights', () => {
   it('collects every kind of insight across trips', () => {
     const trips = [
@@ -289,6 +305,19 @@ describe('generateInsights', () => {
       today: TODAY,
     };
     expect(generateInsights(input).map((i) => i.id)).toEqual(generateInsights(input).map((i) => i.id));
+  });
+
+  it('adds no packing reminder while the packing window is still closed', () => {
+    const trips = [makeTrip({ id: 'tr-far', start_date: '2026-09-01' })];
+    const details = {
+      'tr-far': makeDetail({ packing: [{ category: 'clothing', item: 'Boots', qty: 1, packed: false }] }),
+    };
+    expect(generateInsights({ trips, details, forecasts: {}, today: TODAY })).toEqual([]);
+  });
+
+  it('adds no weather insight when the forecast came back empty', () => {
+    const trips = [makeTrip({ start_date: '2026-04-25' })];
+    expect(generateInsights({ trips, details: {}, forecasts: { 'tr-test': [] }, today: TODAY })).toEqual([]);
   });
 
   it('handles trips with no detail row and no forecast', () => {

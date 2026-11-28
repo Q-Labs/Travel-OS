@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const state: Record<string, unknown> = {
   trips: [],
@@ -49,6 +49,20 @@ describe('forwarding address', () => {
     fireEvent.click(screen.getByRole('button', { name: /Copy address/ }));
     await waitFor(() => expect(writeText).toHaveBeenCalledWith(expect.stringContaining('trips+a1b2c3@')));
     expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
+  });
+
+  it('goes back to Copy address after a moment so a second copy still gives feedback', async () => {
+    state['inboxToken'] = 'a1b2c3';
+    const timeout = vi.spyOn(window, 'setTimeout');
+    render(<InboxPage />);
+    fireEvent.click(screen.getByRole('button', { name: /Copy address/ }));
+    expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
+
+    const reset = timeout.mock.calls.find(([, ms]) => ms === 2000)?.[0];
+    expect(reset).toBeTypeOf('function');
+    act(() => (reset as () => void)());
+    expect(screen.getByRole('button', { name: /Copy address/ })).toBeInTheDocument();
+    timeout.mockRestore();
   });
 
   it('does not claim success when the clipboard refuses', async () => {

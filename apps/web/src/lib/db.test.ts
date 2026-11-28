@@ -173,6 +173,18 @@ describe('subscribeAuthChange', () => {
     sub.unsubscribe();
     expect(unsubscribeFn).toHaveBeenCalledOnce();
   });
+
+  it('passes each new session on to the listener', () => {
+    mockAuth.onAuthStateChange.mockReturnValue({
+      data: { subscription: { unsubscribe: vi.fn() } },
+    });
+    const callback = vi.fn();
+    subscribeAuthChange(callback);
+
+    const handler = mockAuth.onAuthStateChange.mock.calls[0]?.[0] as (event: string, session: unknown) => void;
+    handler('SIGNED_IN', { user: { id: 'u1' } });
+    expect(callback).toHaveBeenCalledWith({ user: { id: 'u1' } });
+  });
 });
 
 // ── Seed detection ────────────────────────────────────────────────────────────

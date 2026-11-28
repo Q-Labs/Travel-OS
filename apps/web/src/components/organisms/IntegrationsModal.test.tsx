@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 
 const state: { inboxToken: string | null; setShowIntegrations: ReturnType<typeof vi.fn> } = {
   inboxToken: null,
@@ -53,6 +53,21 @@ describe('IntegrationsModal calendar feed', () => {
     fireEvent.click(copy);
     expect(writeText).toHaveBeenCalledWith(url);
     expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
+  });
+
+  it('goes back to Copy after a moment so a second copy still gives feedback', async () => {
+    state.inboxToken = 'a1b2c3';
+    const timeout = vi.spyOn(window, 'setTimeout');
+    render(<IntegrationsModal />);
+    fireEvent.click(calendarButton());
+    fireEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    expect(await screen.findByRole('button', { name: 'Copied' })).toBeInTheDocument();
+
+    const reset = timeout.mock.calls.find(([, ms]) => ms === 2000)?.[0];
+    expect(reset).toBeTypeOf('function');
+    act(() => (reset as () => void)());
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+    timeout.mockRestore();
   });
 
   it('hides the feed again when toggled off', () => {

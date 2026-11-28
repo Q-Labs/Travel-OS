@@ -107,6 +107,19 @@ describe('route components', () => {
     unmount();
   });
 
+  it('says "1 trip", not "1 trips", when exactly one trip starts within 30 days', async () => {
+    const saved = TRIPS.map((t) => ({ start_date: t.start_date, end_date: t.end_date }));
+    TRIPS.forEach((t) => { t.start_date = null; t.end_date = null; });
+    Object.assign(TRIPS[0], { start_date: '2026-04-25', end_date: '2026-04-30' });
+    try {
+      renderAt('/app/pipeline');
+      expect(await screen.findByText(/· 1 trip within 30 days/)).toBeInTheDocument();
+      expect(screen.queryByText(/1 trips within/)).not.toBeInTheDocument();
+    } finally {
+      TRIPS.forEach((t, i) => Object.assign(t, saved[i]));
+    }
+  });
+
   it('sidebar and topbar interactions work', async () => {
     renderAt('/app/pipeline');
     await screen.findByText('Travel OS');

@@ -36,7 +36,7 @@ export function AppLayout() {
 
   const todayLabel = localDateLabel(TODAY);
 
-  const soonLabel = /* v8 ignore next */ soonCount === 1 ? `${soonCount} trip within 30 days` : `${soonCount} trips within 30 days`;
+  const soonLabel = soonCount === 1 ? `${soonCount} trip within 30 days` : `${soonCount} trips within 30 days`;
 
   const topbarContent: Record<string, { title: string; subtitle: string }> = {
     pipeline: { title: `${greeting()}, Quincy.`, subtitle: `${todayLabel} · ${soonLabel}` },

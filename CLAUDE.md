@@ -81,6 +81,8 @@ Never ship implementation code that isn't covered by a test written in the red p
 
 The project enforces **100% of all four metrics** (statements, branches, functions, lines) via Vitest v8. A push that drops any metric below 100% will fail CI. If a branch is genuinely untestable (defensive guard, environment-specific path), annotate it with `/* v8 ignore next */` and add a comment explaining why.
 
+Vitest 5 counts more than Vitest 2 did: the implicit `else` of an `if` with no `else`, and a callback nobody calls, are each uncovered. Test them (an unchanged value, an empty result, a callback the test invokes) before reaching for a hint. When a hint is right, put it on its own line before the statement (`/* v8 ignore next */`, `/* v8 ignore if */` or `/* v8 ignore else */`); a hint placed inside an expression, such as in the middle of a ternary, is ignored.
+
 Coverage is measured only over `app/`, `components/`, `lib/`, and `api/`, but `vite.config.ts` **excludes** several files from the requirement: `lib/types.ts`, `lib/data.ts`, `lib/utils.ts`, `lib/supabase.ts`, and `app/AppContext.tsx`. New behaviour added to those files is not counted — but everything else (including `lib/trips.ts`, `lib/db.ts`, and `api/inbox/ingest.ts`) must be fully covered. Before adding to the exclude list, prefer testing the code.
 
 ## Issues and PRs

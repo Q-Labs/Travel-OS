@@ -18,14 +18,14 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 | Layer | Technology |
 |---|---|
 | UI | React 18 + TypeScript (strict) |
-| Build / dev server | Vite 5 |
+| Build / dev server | Vite 8 |
 | Routing | React Router v6 |
 | Backend | Supabase (Postgres + Auth: magic link, password, Google, Apple + Realtime) |
 | AI | Anthropic Claude Haiku (email parsing via `@anthropic-ai/sdk`) |
 | Weather / geocoding | [Open-Meteo](https://open-meteo.com) — no API key, no account |
 | Exchange rates | [Frankfurter](https://frankfurter.dev) (ECB reference rates) — no API key |
 | Destination context | [Wikipedia REST API](https://en.wikipedia.org/api/rest_v1/) — no API key |
-| Unit tests | Vitest + Testing Library (100% branch coverage enforced by `npm run test:coverage`) |
+| Unit tests | Vitest 5 + Testing Library (100% branch coverage enforced by `npm run test:coverage`) |
 | E2E / visual tests | Playwright (Chromium, with screenshot regression) |
 | Design system | [Cobalt](https://github.com/Q-Labs/cobalt) (`@q-labs/cobalt`): Quincy OS tokens + components |
 | Styling | App CSS on top of Cobalt's design tokens |

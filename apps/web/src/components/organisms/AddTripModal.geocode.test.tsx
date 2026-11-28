@@ -27,6 +27,18 @@ function typeDestination(value: string) {
 }
 
 describe('AddTripModal destination autofill', () => {
+  it('hands the geocoder the global fetch to call', async () => {
+    const globalFetch = vi.fn().mockResolvedValue(new Response('{}'));
+    vi.stubGlobal('fetch', globalFetch);
+    geocode.mockImplementation(async (_name: string, get: typeof fetch) => {
+      await get('https://geo.example/search', { method: 'GET' });
+      return null;
+    });
+    render(<AddTripModal />);
+    typeDestination('Lisbon');
+    await waitFor(() => expect(globalFetch).toHaveBeenCalledWith('https://geo.example/search', { method: 'GET' }));
+  });
+
   it('fills region and country from the geocoder', async () => {
     geocode.mockResolvedValue(PLACE);
     render(<AddTripModal />);
