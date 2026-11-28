@@ -5,6 +5,11 @@ import { ParsedCard } from '../molecules/ParsedCard';
 import type { InboxItem } from '../../lib/types';
 import { Button } from '@q-labs/cobalt';
 
+/**
+ * One forwarded email in the inbox: its vendor, subject, sender and age, where
+ * it came from, the parsed booking (or a parsing indicator) and any note, with
+ * actions to open the suggested trip, assign the item or dismiss it.
+ */
 export function InboxRow({
   item,
   onOpen,

@@ -28,6 +28,12 @@ function computeSettle(splits: TripSplit[]): SettleRow[] {
   return rows;
 }
 
+/**
+ * How a trip's costs split between its travelers: what each has paid against
+ * their share, and who owes whom to settle up (a row can be dismissed). With no
+ * split recorded it shows the equal-split default, and with a single traveler it
+ * draws nothing.
+ */
 export function SplitBudget({ splits, trip }: { splits: TripSplit[] | undefined; trip: Trip }) {
   const travelers = trip.travelers
     .map((id) => TRAVELERS.find((t) => t.id === id))

@@ -3,6 +3,12 @@ import { STAGES } from '../../lib/utils';
 import type { Trip } from '../../lib/types';
 import { TripCard } from './TripCard';
 
+/**
+ * The pipeline board: a column per stage with a card for each trip, filtered by
+ * the chosen categories and sorted by start date, with undated trips last.
+ * Dragging a card to another column moves the trip there through `onMove`, and
+ * clicking a card calls `onOpen`.
+ */
 export function KanbanBoard({
   trips,
   categoryFilter,

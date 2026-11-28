@@ -19,6 +19,11 @@ const asButton = (onClick: () => void) => ({
   },
 });
 
+/**
+ * The signed-in navigation: the Pipeline, Inbox, Calendar and Archive views
+ * with their counts, the trip-category filters, the buttons for Integrations
+ * and Tweaks, and sign-out.
+ */
 export function Sidebar() {
   const {
     trips, inbox, categoryFilter, toggleCategoryFilter,

@@ -5,6 +5,12 @@ import { INBOX_DOMAIN, INBOX_MAILBOX } from '../../lib/inboxAddress';
 import { Icon } from '../atoms/Icon';
 import { Button } from '@q-labs/cobalt';
 
+/**
+ * The Integrations dialog, which lists how bookings get into the app. The
+ * calendar feed and the forwarding address both come from the user's token, so
+ * each shows as connected only once the token exists, and the calendar row
+ * reveals the feed URL to copy. The other rows are informational.
+ */
 export function IntegrationsModal() {
   const { setShowIntegrations, inboxToken } = useApp();
   const [showFeed, setShowFeed] = useState(false);

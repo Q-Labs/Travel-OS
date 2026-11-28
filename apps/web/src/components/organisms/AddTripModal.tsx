@@ -26,6 +26,12 @@ const STEP_LABELS = ['the idea', 'who and what', 'first details'];
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD', 'MXN', 'SEK', 'NOK'];
 const COVER_HUES = [20, 180, 350, 260, 60, 110, 300];
 
+/**
+ * The new-trip wizard, in three steps (the idea, who and what, first details),
+ * ending in adding the trip through `useApp`. Region and country fill in from
+ * the destination through Open-Meteo's geocoder, without overwriting anything
+ * the user typed.
+ */
 export function AddTripModal() {
   const { addTrip, setShowModal } = useApp();
   const [step, setStep] = useState(0);
