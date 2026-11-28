@@ -16,10 +16,8 @@ function computeSettle(splits: TripSplit[]): SettleRow[] {
   while (ci < cred.length && di < debt.length) {
     const amt = Math.min(cred[ci].rem, debt[di].rem);
     // Both sides are at least a cent when this runs (the filters above and the
-    // two `< 0.01` skips below guarantee it), so `amt` can only be a cent or
-    // less through floating-point dust. The guard keeps such a row out.
-    /* v8 ignore else -- unreachable with real amounts; see the comment above */
-    if (amt > 0.01) rows.push({ fromId: debt[di].id, toId: cred[ci].id, amount: amt });
+    // two `< 0.01` skips below guarantee it), so every step is a real payment.
+    rows.push({ fromId: debt[di].id, toId: cred[ci].id, amount: amt });
     cred[ci].rem -= amt;
     debt[di].rem -= amt;
     if (cred[ci].rem < 0.01) ci++;
