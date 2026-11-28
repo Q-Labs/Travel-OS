@@ -5,13 +5,7 @@ vi.mock('../lib/db', () => ({
 }));
 
 import { getSession } from '../lib/db';
-import { authGuardLoader, tripsLoader } from './routes';
-
-describe('tripsLoader', () => {
-  it('returns an empty trips loader payload', () => {
-    expect(tripsLoader()).toEqual({});
-  });
-});
+import { authGuardLoader } from './routes';
 
 describe('authGuardLoader', () => {
   it('returns {} when a session exists', async () => {

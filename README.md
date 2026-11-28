@@ -54,7 +54,9 @@ It is published to GitHub Packages, so installing needs a token:
 3. `npm ci`.
 
 **CI** reads the token from the `COBALT_PACKAGES_TOKEN` repository secret (a token with `read:packages`). The
-built-in `GITHUB_TOKEN` cannot read a package owned by another account, so there is no fallback.
+built-in `GITHUB_TOKEN` cannot read `@q-labs/cobalt` unless the package grants this repository Actions access
+(package settings, Manage Actions access), so there is no fallback today, and a pull request from a fork or from
+Dependabot, which gets no secrets, cannot install it (#152).
 **Vercel** needs an `NPM_RC` environment variable containing the two `.npmrc` lines above, with the real token.
 
 How it is used:
@@ -210,9 +212,11 @@ Both values are available in your Supabase project under **Settings → API**.
 
 ### Feature flags (Vite, build-time)
 
-Code outside the MVP sits behind a flag or is removed. Each flag is a `VITE_FLAG_<NAME>` variable that is **off unless it is exactly `true`** (`TRUE`, `1` and `yes` do not count). Vite fixes the value when it builds, so turning a flag on means a rebuild and a redeploy; with a flag off, the code behind it is not in the production bundle.
+Code outside the MVP sits behind a flag or is removed. Each flag is a `VITE_FLAG_<NAME>` variable that is **off unless it is exactly `true`** (`TRUE`, `1` and `yes` do not count). Vite fixes the value when it builds, so turning a flag on means a rebuild and a redeploy. Once something reads a flag, a build with it off leaves the code behind it out of the production bundle (that is why each flag is written the way `lib/flags.ts` explains).
 
-| Variable | Flag in `lib/flags.ts` | Owner | Gates |
+**Nothing reads either flag yet.** #137 wires them in, so until then the Tweaks panel and the Google button show whatever the flags say, which is nothing: both are on screen regardless.
+
+| Variable | Flag in `lib/flags.ts` | Owner | Will gate (#137) |
 |---|---|---|---|
 | `VITE_FLAG_TWEAKS` | `FLAG_TWEAKS` | #142 | The Tweaks panel (theme, density, accents) |
 | `VITE_FLAG_SIGNIN_GOOGLE` | `FLAG_SIGNIN_GOOGLE` | #143 | "Continue with Google" on the sign-in page |

@@ -6,6 +6,10 @@ export default defineConfig({
   test: {
     include: ['apps/web/src/**/*.{test,spec}.{ts,tsx}', 'api/**/*.{test,spec}.ts'],
     environment: 'jsdom',
+    // Undo every spy and global stub after each test, even one that failed, so a
+    // failure cannot leak into the tests after it (see testIsolation.test.ts).
+    restoreMocks: true,
+    unstubGlobals: true,
     setupFiles: 'apps/web/vitest.setup.ts',
     // Cobalt ships CSS imports that Node cannot load; let Vite process the package.
     server: { deps: { inline: [/@q-labs\/cobalt/] } },

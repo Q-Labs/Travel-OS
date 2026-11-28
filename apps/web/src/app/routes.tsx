@@ -2,12 +2,6 @@ import { redirect } from 'react-router-dom';
 import { getSession } from '../lib/db';
 
 /**
- * A loader that returns nothing. No route uses it now, since `AppLayout` reads
- * trips from `AppContext` instead.
- */
-export const tripsLoader = () => ({});
-
-/**
  * Sends a visitor with no session to `/login`. A dev server started with
  * `VITE_E2E_BYPASS_AUTH=true` lets everyone through, which is how the
  * end-to-end tests reach signed-in pages without credentials; that check is

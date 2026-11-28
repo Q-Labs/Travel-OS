@@ -21,7 +21,9 @@ jobs:
       - run: npm ci
         env:
           # COBALT_PACKAGES_TOKEN: a token with read:packages. The built-in
-          # GITHUB_TOKEN cannot read a package owned by another account.
+          # GITHUB_TOKEN cannot read @q-labs/cobalt unless the package grants
+          # this repository Actions access (package settings, Manage Actions
+          # access); see #152. Fork and Dependabot runs get no secrets at all.
           NODE_AUTH_TOKEN: ${{ secrets.COBALT_PACKAGES_TOKEN }}
       - run: npm run lint
       - run: npm run typecheck
@@ -48,7 +50,9 @@ jobs:
       - run: npm ci
         env:
           # COBALT_PACKAGES_TOKEN: a token with read:packages. The built-in
-          # GITHUB_TOKEN cannot read a package owned by another account.
+          # GITHUB_TOKEN cannot read @q-labs/cobalt unless the package grants
+          # this repository Actions access (package settings, Manage Actions
+          # access); see #152. Fork and Dependabot runs get no secrets at all.
           NODE_AUTH_TOKEN: ${{ secrets.COBALT_PACKAGES_TOKEN }}
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
