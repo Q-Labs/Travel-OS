@@ -18,6 +18,7 @@ apps/web/
                    templates/   AuthLayout (signed-out frame); the signed-in frame is Cobalt's DashboardLayout
                    pages/       one per route: Pipeline, Inbox, Calendar, Archive, TripDetail,
                                 Login, plus AppLayout
+    storybook/   — helpers the stories share (fixture lookups, a fetch stub); not part of the app
     lib/         — types.ts, data.ts (fixtures), db.ts (Supabase CRUD + Realtime),
                    trips.ts (pure trip selectors), supabase.ts (client), utils.ts,
                    flags.ts (feature flags: VITE_FLAG_*, off unless "true")
@@ -50,6 +51,8 @@ npm test -- trips              # run a single file/suite by name filter
 npm test -- -t "non-archived"  # run tests matching a title
 npm run test:e2e               # Playwright (Chromium) integration + visual specs
 npm run test:e2e:ui            # Playwright interactive UI mode
+npm run storybook              # Storybook on http://localhost:6006
+npm run build-storybook        # build Storybook into storybook-static/ (CI runs it)
 npm run dev                    # vite dev server (http://localhost:5173)
 npm run build                  # tsc -b + vite build
 npm run lint                   # eslint apps/web/src: zero warnings, JSDoc on every export
@@ -109,6 +112,7 @@ When addressing feedback on a pull request:
 - React functional components only; all state via `useApp()` from `AppContext`
 - UI is built on the **Cobalt design system** (`@q-labs/cobalt`): use its components before writing your own (`components/cobalt-usage.test.ts` guards this) and its tokens for colour, type, radius and shadow. `styles.css` holds only app-specific layout; its legacy names (`--accent`, `--ink`, `--surface`, …) alias Cobalt tokens, so never add a new palette
 - Code outside the MVP is behind a feature flag or removed. A flag is an exported `FLAG_*` constant in `lib/flags.ts`, read from `VITE_FLAG_<NAME>` and off unless it is exactly `true`; components import it and never read `VITE_FLAG_*` themselves. Keep each flag's comparison inline in its own constant (no helper, no object), or the bundler cannot drop the code behind an off flag. Name the owning issue in a comment, and delete the flag when its feature ships or is cut
+- Every component ships with its story: a `Name.stories.tsx` beside it, one story per variant and state it can really show (default, empty, loading, error, as the component has them), built by `npm run build-storybook` in CI. `components/stories.test.ts` fails and names a component that has none. In a story, set the app's data with `parameters.app`, the URL with `parameters.route`, answer an outside API with `mockFetch` from `src/storybook/fetch.ts`, and make a `lib/db` call answer with `mocked(fn).mockResolvedValue(...)`. Stories are exempt from coverage and from the JSDoc rule
 - Every export under `apps/web/src` has a JSDoc comment saying what it does and, when it is not obvious, why. No types in it: TypeScript owns them. `npm run lint` fails on a missing one (`eslint-plugin-jsdoc`, handbook D27). Tests and stories are exempt. `@param` and `@returns` tags are not required, because for a component with destructured props they only repeat the type, but a tag you do write needs a description
 - No new dependencies without discussion (`@q-labs/cobalt` is the agreed design-system dependency; installing it needs a `read:packages` token, see README)
 - Commit messages: `type(#issue): short description` (e.g. `feat(#7): add AddTripModal wizard`)

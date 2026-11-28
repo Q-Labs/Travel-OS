@@ -85,6 +85,7 @@ flowchart TB
 | Only organisms and pages call `useApp()` | Convention in `CLAUDE.md` |
 | Pure logic takes its clock and its `fetch` as arguments | Convention; every `lib/clients/*` and `api/*` handler does |
 | The server functions import pure modules from `apps/web/src/lib/` by relative path | Convention |
+| Every component has a story file beside it, one story per variant and state, and Storybook builds in CI (D26) | `components/stories.test.ts`, and the `build-storybook` step in CI (#128) |
 | Every export under `apps/web/src` has a JSDoc comment (what it does and why, no types), with no lint warnings allowed. The kit's `@param` and `@returns` rules are off: for a component with destructured props they only repeat the type | `eslint-plugin-jsdoc` in `eslint.config.js` (D27, #129) |
 | Code outside the MVP is behind a build-time flag from `lib/flags.ts` (`VITE_FLAG_<NAME>`, off unless `true`), and only that module reads `VITE_FLAG_*` | `lib/flags.test.ts` |
 
@@ -176,7 +177,7 @@ The model's reply is parsed as JSON and cast to a type. It is not validated agai
 
 ```mermaid
 flowchart LR
-    commit["git commit<br/><i>husky: lint-staged</i>"] --> push["git push<br/><i>husky: typecheck, test with coverage</i>"] --> ci["ci.yml on every branch<br/>lint → typecheck → test with coverage → build<br/>then Playwright"]
+    commit["git commit<br/><i>husky: lint-staged</i>"] --> push["git push<br/><i>husky: typecheck, test with coverage</i>"] --> ci["ci.yml on every branch<br/>lint → typecheck → test with coverage → build → Storybook build<br/>then Playwright"]
     ci -->|"main only"| pages["Playwright report<br/>to GitHub Pages"]
     merge(["merge to main"]) -. "Git integration" .-> vercel["Vercel builds and deploys"]
     sql["supabase/migrations/*.sql"] -. "by hand" .-> db[("Live database")]
@@ -186,7 +187,7 @@ flowchart LR
 | --- | --- | --- |
 | pre-commit hook | Locally | `lint-staged`: ESLint with `--fix` on the staged files under `apps/web/src` |
 | pre-push hook | Locally | `npm run typecheck && npm run test:coverage` |
-| CI `check` | Every push and pull request, on the Node in `.nvmrc` | Lint, typecheck, unit tests with 100% coverage on all four measures, build |
+| CI `check` | Every push and pull request, on the Node in `.nvmrc` | Lint, typecheck, unit tests with 100% coverage on all four measures, build, Storybook build |
 | CI `playwright` | After `check` | Integration specs and nine visual snapshots, Chromium, 1280 × 800, against the dev server with a dev-only sign-in bypass |
 | Deploy | Outside the repository | Vercel's own build. CI does not gate it |
 | Migrations | Nowhere | No job applies or tests them |
@@ -230,7 +231,6 @@ Stack-level gaps only. Each has an issue.
 | Failures returned as data | The data layer logs and returns nothing | #118 |
 | Security headers and a Content-Security-Policy | None in the repository | #123 |
 | End-to-end tests against the built output | Against the dev server | #119, #106 |
-| Storybook 10, with a story file for every component, built in CI (D26) | No Storybook. 36 components, no story file | #128 |
 | `docs/architecture.md` | This page | #114 |
 
 ## Not verified

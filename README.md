@@ -27,6 +27,7 @@ A personal trip-management app — pipeline, inbox, calendar, budget, packing, a
 | Destination context | [Wikipedia REST API](https://en.wikipedia.org/api/rest_v1/) — no API key |
 | Unit tests | Vitest 5 + Testing Library (100% branch coverage enforced by `npm run test:coverage`) |
 | E2E / visual tests | Playwright (Chromium, with screenshot regression) |
+| Component explorer | Storybook 10: a story file for every component, built in CI |
 | Design system | [Cobalt](https://github.com/Q-Labs/cobalt) (`@q-labs/cobalt`): Quincy OS tokens + components |
 | Styling | App CSS on top of Cobalt's design tokens |
 | Deployment | Vercel |
@@ -243,6 +244,8 @@ Components import the flag from `lib/flags.ts` and never read the variable; `fla
 | `npm run test:watch` | Vitest in watch mode |
 | `npm run test:e2e` | Playwright integration + visual tests (Chromium) |
 | `npm run test:e2e:ui` | Playwright in interactive UI mode |
+| `npm run storybook` | Storybook on http://localhost:6006: every component in each of its states |
+| `npm run build-storybook` | Build Storybook into `storybook-static/`; CI runs it |
 
 ### Playwright quick-start
 
@@ -307,6 +310,7 @@ apps/web/
                    templates/   AuthLayout (signed-out frame); the signed-in frame is Cobalt's DashboardLayout
                    pages/       one per route: Pipeline, Inbox, Calendar, Archive, TripDetail,
                                 Login, plus AppLayout
+    storybook/   — helpers the stories share: fixture lookups and a fetch stub (not part of the app)
     lib/         — types.ts, db.ts (Supabase CRUD + Realtime), data.ts (fixtures), utils.ts,
                    rows.ts (row → domain mappers), insights.ts (pure insight rules),
                    inboundEmail.ts (provider webhook adapters), ical.ts (RFC 5545 writer),
@@ -327,6 +331,7 @@ supabase/
   migrations/    — schema, RLS policies, Realtime publication
 .github/         — ci.yml, pull_request_template.md, ISSUE_TEMPLATE/ (Feature, Bug and Task forms)
 .claude/skills/verify/ — how to run the app and prove a change works at runtime
+.storybook/      — Storybook's config: how stories are found, and the providers each one runs inside
 ```
 
 All state lives in `AppContext`. Every mutation flows through `AppContext` actions → `lib/db.ts` → Supabase. Components read state via the `useApp()` hook and never manage trip data locally.
@@ -371,6 +376,8 @@ user is resolved from the recipient's plus-tag token. It then accepts a forwarde
 ## Development workflow
 
 See [CLAUDE.md](CLAUDE.md) for the full TDD red → green → refactor cycle, 100% coverage requirement, issue/PR conventions, and commit message format.
+
+Every component has a story file beside it (`Name.stories.tsx`) with one story per variant and state it can show, and `components/stories.test.ts` fails when one is missing. Run `npm run storybook` to see them. A story sets the app's data with `parameters.app` and its URL with `parameters.route`, answers outside APIs with `mockFetch` (`src/storybook/fetch.ts`), and answers `lib/db` calls with `mocked(...)`. Stories are exempt from coverage and from the JSDoc rule.
 
 Every export under `apps/web/src` has a JSDoc comment that says what it does and why (no types in it; TypeScript has those), and `npm run lint` fails when one is missing. Tests and stories are exempt.
 
