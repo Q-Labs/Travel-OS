@@ -313,6 +313,8 @@ api/             — Vercel serverless functions (must sit at the repo root)
       feed.ts    — GET /api/calendar/<token> (read-only iCal feed)
 supabase/
   migrations/    — schema, RLS policies, Realtime publication
+.github/         — ci.yml, pull_request_template.md, ISSUE_TEMPLATE/ (Feature, Bug and Task forms)
+.claude/skills/verify/ — how to run the app and prove a change works at runtime
 ```
 
 All state lives in `AppContext`. Every mutation flows through `AppContext` actions → `lib/db.ts` → Supabase. Components read state via the `useApp()` hook and never manage trip data locally.
@@ -357,3 +359,5 @@ user is resolved from the recipient's plus-tag token. It then accepts a forwarde
 ## Development workflow
 
 See [CLAUDE.md](CLAUDE.md) for the full TDD red → green → refactor cycle, 100% coverage requirement, issue/PR conventions, and commit message format.
+
+Open an issue with the Feature, Bug or Task form, and write the pull request against `.github/pull_request_template.md`. Before opening it, run the change in the app as described in [`.claude/skills/verify/SKILL.md`](.claude/skills/verify/SKILL.md) and say what you saw.

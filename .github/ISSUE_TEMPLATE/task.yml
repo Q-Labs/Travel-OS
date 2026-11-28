@@ -1,0 +1,57 @@
+name: Task
+description: Implementation work, refactor or infrastructure (not directly user-visible)
+title: "[Task]: "
+type: Task
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for refactors, dependency bumps, infrastructure, tooling or test work: "no visible change, but the code is healthier".
+        For user-visible work use **Feature**.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: One paragraph describing the change.
+    validations:
+      required: true
+
+  - type: textarea
+    id: why-now
+    attributes:
+      label: Why now
+      description: What's the trigger? Risk avoided, work unblocked, debt reduced?
+    validations:
+      required: true
+
+  - type: textarea
+    id: done-when
+    attributes:
+      label: Done when
+      value: |
+        - [ ]
+        - [ ] `npm run lint`, `typecheck`, `test:coverage` (100%) and `build` pass
+        - [ ] Docs updated if behaviour or structure changed
+    validations:
+      required: true
+
+  - type: input
+    id: parent
+    attributes:
+      label: Parent issue
+      placeholder: e.g. #1
+
+  - type: dropdown
+    id: effort
+    attributes:
+      label: Effort estimate
+      options:
+        - XS - under 2 hours
+        - S - half day
+        - M - one weekend
+        - L - multi-weekend
+        - XL - needs scoping
+      default: 1
+    validations:
+      required: true

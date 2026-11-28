@@ -1,0 +1,77 @@
+name: Bug
+description: Something is broken or wrong
+title: "[Bug]: "
+type: Bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this when something doesn't work as intended.
+        For desired-but-missing behaviour use **Feature**.
+
+        **Security problem?** Do not post details here: use a private security advisory instead (Security → Advisories → Report a vulnerability).
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One sentence describing the bug.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      description: Numbered steps to reliably reproduce. If you can't, say so and describe what you saw.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: What happens instead. Include error messages, console output, screenshots if useful.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - P0 - data loss, security, or blocks all use
+        - P1 - broken core flow, no workaround
+        - P2 - broken non-core flow, or has a workaround
+        - P3 - papercut, polish
+      default: 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      value: |
+        - Browser / device:
+        - Signed in / signed out:
+        - Commit or deploy:
+
+  - type: checkboxes
+    id: regression-test
+    attributes:
+      label: Regression test
+      description: Per CLAUDE.md, fixes follow red -> green -> refactor.
+      options:
+        - label: I will write a failing test that reproduces this bug before implementing the fix
