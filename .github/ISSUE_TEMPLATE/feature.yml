@@ -1,0 +1,59 @@
+name: Feature
+description: A new user-visible capability
+title: "[Feature]: "
+type: Feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for new capabilities visible to end users.
+        For refactors, infrastructure or test work use **Task**. For a bug use **Bug**.
+
+  - type: textarea
+    id: what-and-why
+    attributes:
+      label: What and why
+      description: One paragraph. What does this enable, and why now?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      description: Checklist of what "done" looks like, from a user's perspective.
+      value: |
+        - [ ] User can ...
+        - [ ] When X happens, the system ...
+        - [ ] Edge case: ...
+        - [ ] Tests written first (red -> green -> refactor); 100% coverage on touched files
+        - [ ] README.md and docs/architecture.md updated if behaviour or structure changed
+    validations:
+      required: true
+
+  - type: input
+    id: parent
+    attributes:
+      label: Parent issue
+      description: If this is part of a larger effort, link the parent here and attach this as a sub-issue.
+      placeholder: e.g. #1
+
+  - type: dropdown
+    id: effort
+    attributes:
+      label: Effort estimate
+      options:
+        - XS - under 2 hours
+        - S - half day
+        - M - one weekend
+        - L - multi-weekend
+        - XL - needs scoping (split into sub-issues)
+      default: 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: open-questions
+    attributes:
+      label: Open questions
+      description: Anything blocking a clean start? Decisions to make first.
