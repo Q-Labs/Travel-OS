@@ -85,6 +85,9 @@ flowchart TB
 | Only organisms and pages call `useApp()` | Convention in `CLAUDE.md` |
 | Pure logic takes its clock and its `fetch` as arguments | Convention; every `lib/clients/*` and `api/*` handler does |
 | The server functions import pure modules from `apps/web/src/lib/` by relative path | Convention |
+| Code outside the MVP is behind a build-time flag from `lib/flags.ts` (`VITE_FLAG_<NAME>`, off unless `true`), and only that module reads `VITE_FLAG_*` | `lib/flags.test.ts` |
+
+Flags are fixed at build time, so turning one on is a rebuild and a redeploy, not a runtime switch. Each flag is its own exported constant with the comparison written inline: a build with `FLAG_TWEAKS` off and one with it on were compared, and the code behind a flag that is off is absent from the production bundle only in that shape. Gathering the flags into an object or reading them through a shared helper left the code in the bundle. Today there are two flags, both owned by issues outside the first release (#142, #143) and consumed by #137.
 
 ## State and the write path
 

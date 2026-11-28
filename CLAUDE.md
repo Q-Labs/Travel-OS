@@ -19,7 +19,8 @@ apps/web/
                    pages/       one per route: Pipeline, Inbox, Calendar, Archive, TripDetail,
                                 Login, plus AppLayout
     lib/         — types.ts, data.ts (fixtures), db.ts (Supabase CRUD + Realtime),
-                   trips.ts (pure trip selectors), supabase.ts (client), utils.ts
+                   trips.ts (pure trip selectors), supabase.ts (client), utils.ts,
+                   flags.ts (feature flags: VITE_FLAG_*, off unless "true")
 api/             — Vercel serverless functions. These must live at the repo root:
                    that is where Vercel discovers them, so they cannot move
                    under apps/web/ even though they import from it.
@@ -107,6 +108,7 @@ When addressing feedback on a pull request:
 - TypeScript strict mode — no `any`, no non-null assertions without a comment
 - React functional components only; all state via `useApp()` from `AppContext`
 - UI is built on the **Cobalt design system** (`@q-labs/cobalt`): use its components before writing your own (`components/cobalt-usage.test.ts` guards this) and its tokens for colour, type, radius and shadow. `styles.css` holds only app-specific layout; its legacy names (`--accent`, `--ink`, `--surface`, …) alias Cobalt tokens, so never add a new palette
+- Code outside the MVP is behind a feature flag or removed. A flag is an exported `FLAG_*` constant in `lib/flags.ts`, read from `VITE_FLAG_<NAME>` and off unless it is exactly `true`; components import it and never read `VITE_FLAG_*` themselves. Keep each flag's comparison inline in its own constant (no helper, no object), or the bundler cannot drop the code behind an off flag. Name the owning issue in a comment, and delete the flag when its feature ships or is cut
 - No new dependencies without discussion (`@q-labs/cobalt` is the agreed design-system dependency; installing it needs a `read:packages` token, see README)
 - Commit messages: `type(#issue): short description` (e.g. `feat(#7): add AddTripModal wizard`)
 
