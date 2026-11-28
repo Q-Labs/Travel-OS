@@ -54,7 +54,9 @@ It is published to GitHub Packages, so installing needs a token:
 3. `npm ci`.
 
 **CI** reads the token from the `COBALT_PACKAGES_TOKEN` repository secret (a token with `read:packages`). The
-built-in `GITHUB_TOKEN` cannot read a package owned by another account, so there is no fallback.
+built-in `GITHUB_TOKEN` cannot read `@q-labs/cobalt` unless the package grants this repository Actions access
+(package settings, Manage Actions access), so there is no fallback today, and a pull request from a fork or from
+Dependabot, which gets no secrets, cannot install it (#152).
 **Vercel** needs an `NPM_RC` environment variable containing the two `.npmrc` lines above, with the real token.
 
 How it is used:
