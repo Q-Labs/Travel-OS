@@ -61,17 +61,21 @@ type AppActions = {
 
 const Ctx = createContext<(AppState & AppActions) | null>(null);
 
+/** The data `AppProvider` starts on, for the parts a caller wants to replace. */
+export type InitialAppData = Partial<Pick<AppState, 'trips' | 'tripDetails' | 'insights' | 'inbox' | 'inboxToken'>>;
+
 /**
  * Holds all of the app's state and every action that changes it, and provides
- * them to the tree. It starts on the fixtures. When Supabase is configured it
- * swaps in the signed-in user's own data, empties it on sign-out, keeps the
- * inbox live, and writes each change back through `lib/db.ts`.
+ * them to the tree. It starts on the fixtures, or on whatever `initial`
+ * replaces, which is how a story or a test shows an empty app. When Supabase is
+ * configured it swaps in the signed-in user's own data, empties it on sign-out,
+ * keeps the inbox live, and writes each change back through `lib/db.ts`.
  */
-export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [trips, setTrips] = useState<Trip[]>(TRIPS);
-  const [tripDetails, setTripDetails] = useState<Record<string, TripDetail>>(TRIP_DETAILS);
-  const [insights, setInsights] = useState<Insight[]>(INSIGHTS);
-  const [inbox, setInbox] = useState<InboxItem[]>(INBOX);
+export function AppProvider({ children, initial }: { children: React.ReactNode; initial?: InitialAppData }) {
+  const [trips, setTrips] = useState<Trip[]>(initial?.trips ?? TRIPS);
+  const [tripDetails, setTripDetails] = useState<Record<string, TripDetail>>(initial?.tripDetails ?? TRIP_DETAILS);
+  const [insights, setInsights] = useState<Insight[]>(initial?.insights ?? INSIGHTS);
+  const [inbox, setInbox] = useState<InboxItem[]>(initial?.inbox ?? INBOX);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
@@ -82,7 +86,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [showModal, setShowModal] = useState(false);
   const [showIntegrations, setShowIntegrations] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [inboxToken, setInboxToken] = useState<string | null>(null);
+  const [inboxToken, setInboxToken] = useState<string | null>(initial?.inboxToken ?? null);
 
   useEffect(() => { document.documentElement.setAttribute('data-theme', theme); }, [theme]);
   useEffect(() => {
