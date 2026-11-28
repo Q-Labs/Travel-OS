@@ -27,6 +27,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:coverage
       - run: npm run build
+      - run: npm run build-storybook
 
   playwright:
     # Playwright 1.56 does not support the Ubuntu 26.04 that ubuntu-latest now

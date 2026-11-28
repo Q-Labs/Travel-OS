@@ -19,6 +19,18 @@ npm run build          # tsc -b, then vite build into dist/
 
 This proves the production bundle compiles. It does not prove the screens work.
 
+## Look at a component in each of its states
+
+Every component has a story for each state it can show. To check one without driving the whole app, run `npm run storybook` and open it, or build and look at the result:
+
+```bash
+npm run build-storybook                          # writes storybook-static/
+(cd storybook-static && python3 -m http.server 6007 --bind 127.0.0.1) &
+# a story is at http://127.0.0.1:6007/iframe.html?id=<story-id>&viewMode=story ; the ids are in /index.json
+```
+
+Stop it with `pkill -f "http.server 6007"`. Drive a story with the same Playwright snippet as below, pointed at that URL.
+
 ## Serve and drive
 
 ```bash
