@@ -41,7 +41,9 @@ configures both the build and the Vitest runner. Requires Node ≥ 24 (see `pack
 ## Commands
 
 ```bash
-npm test                       # vitest run --coverage (must stay at 100%, see Coverage)
+npm test                       # vitest run: the fast loop, no coverage
+npm run test:coverage          # vitest run --coverage: the gate, must stay at 100% (see Coverage)
+npm run typecheck              # tsc --noEmit over tsconfig.app.json
 npm run test:watch             # vitest in watch mode
 npm test -- trips              # run a single file/suite by name filter
 npm test -- -t "non-archived"  # run tests matching a title
@@ -52,9 +54,10 @@ npm run build                  # tsc -b + vite build
 npm run lint                   # eslint apps/web/src
 ```
 
-A husky **pre-push hook (`.husky/pre-push`) runs `npm run lint && npm test && npm run build`**
-— the push is rejected if any of the three fail, so lint/coverage/typecheck gate every push
-(commits are not gated).
+Two husky hooks gate the work. **`.husky/pre-commit` runs `lint-staged`**, which lints and fixes
+the staged files under `apps/web/src`. **`.husky/pre-push` runs `npm run typecheck && npm run test:coverage`**
+— the push is rejected if either fails. Push-time gates (not commit-time) let the red commit of a
+red → green → refactor cycle be committed locally. CI also runs lint and build on every push.
 
 ### End-to-end tests
 

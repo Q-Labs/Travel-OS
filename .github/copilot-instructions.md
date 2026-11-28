@@ -16,7 +16,7 @@ Never suggest implementation code without a corresponding test written beforehan
 
 ## Coverage requirement
 
-100% branch coverage is enforced. `npm test` will fail if any metric drops below 100%. Annotate genuinely untestable branches with `/* v8 ignore next */` and explain why in a comment.
+100% branch coverage is enforced. `npm run test:coverage` will fail if any metric drops below 100%. Annotate genuinely untestable branches with `/* v8 ignore next */` and explain why in a comment.
 
 ## Issues and PRs
 

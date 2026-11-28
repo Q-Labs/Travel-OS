@@ -10,7 +10,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint apps/web/src",
-    "test": "vitest run --coverage",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
@@ -38,9 +40,15 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "husky": "^9.1.7",
     "jsdom": "^26.1.0",
+    "lint-staged": "^17.6.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.58.2",
     "vite": "^5.4.19",
     "vitest": "^2.1.9"
+  },
+  "lint-staged": {
+    "apps/web/src/**/*.{ts,tsx}": [
+      "eslint --fix --max-warnings 0"
+    ]
   }
 }

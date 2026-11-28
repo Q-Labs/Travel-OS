@@ -1,1 +1,4 @@
-npm run lint && npm test && npm run build
+# Quality gates run at push time rather than commit time, so the red commit of a
+# red -> green -> refactor cycle can still be committed locally.
+npm run typecheck
+npm run test:coverage
