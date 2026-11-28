@@ -8,6 +8,7 @@ const VENDOR_GLYPH: Record<string, { c: string; g: string }> = {
   'Icelandair':      { c: 'oklch(50% 0.13 230)', g: 'I' },
 };
 
+/** A square badge for a vendor: the brand colour and initial for the vendors we know, and a neutral badge with the name's first letter for any other. */
 export function VendorMark({ vendor }: { vendor: string }) {
   const vg = VENDOR_GLYPH[vendor] ?? { c: 'var(--ink-3)', g: vendor[0] };
   return <div className="vendor-mark" style={{ background: vg.c }}>{vg.g}</div>;
