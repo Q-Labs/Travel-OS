@@ -8,6 +8,7 @@
 /** The currency budgets are converted into for display. */
 export const HOME_CURRENCY = 'USD';
 
+/** Exchange rates against one base currency: how many units of each currency one unit of `base` buys. */
 export type RateTable = {
   base: string;
   rates: Record<string, number>;
@@ -26,6 +27,11 @@ function fromBase(code: string, table: RateTable): number | null {
   return table.rates[code] ?? null;
 }
 
+/**
+ * Converts an amount between two currencies, routing through the table's base
+ * currency. Returns null when either currency has no rate, so a caller never
+ * shows a figure it had to invent.
+ */
 export function convertAmount(
   amount: number,
   from: string,
@@ -39,6 +45,10 @@ export function convertAmount(
   return amount * into * outOf;
 }
 
+/**
+ * Formats an amount in whole units of a currency, such as `$2,000`. A malformed
+ * currency code falls back to the code and the number rather than throwing.
+ */
 export function fmtMoneyIn(amount: number, currency: string): string {
   try {
     return new Intl.NumberFormat('en-US', {

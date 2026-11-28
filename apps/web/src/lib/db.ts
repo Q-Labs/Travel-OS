@@ -4,6 +4,7 @@ import type { Trip, TripDetail, Insight, InboxItem, Traveler } from './types';
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
+/** The current Supabase session, or null when nobody is signed in. */
 export async function getSession() {
   const { data } = await supabase.auth.getSession();
   return data.session;
@@ -13,6 +14,10 @@ export async function getSession() {
 // Must be on the project's allowed redirect URL list (see README).
 const appUrl = () => `${window.location.origin}/app/pipeline`;
 
+/**
+ * Emails a one-time sign-in link that returns the user to the pipeline. The
+ * error is handed back, not thrown, so the form can show it.
+ */
 export async function signInWithMagicLink(email: string): Promise<{ error: Error | null }> {
   const { error } = await supabase.auth.signInWithOtp({
     email,
@@ -21,13 +26,17 @@ export async function signInWithMagicLink(email: string): Promise<{ error: Error
   return { error: error as Error | null };
 }
 
+/** Signs in with an email and password. The error is handed back, not thrown, so the form can show it. */
 export async function signInWithPassword(email: string, password: string): Promise<{ error: Error | null }> {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   return { error: error as Error | null };
 }
 
-// On success the browser is redirected to the provider, so the promise only
-// matters when the flow could not start (for example the provider is disabled).
+/**
+ * Starts sign-in with an outside provider. On success the browser is redirected
+ * to the provider, so the promise only matters when the flow could not start
+ * (for example the provider is disabled).
+ */
 export async function signInWithOAuth(provider: 'google' | 'apple'): Promise<{ error: Error | null }> {
   const { error } = await supabase.auth.signInWithOAuth({
     provider,
@@ -36,12 +45,14 @@ export async function signInWithOAuth(provider: 'google' | 'apple'): Promise<{ e
   return { error: error as Error | null };
 }
 
+/** Signs the current user out. */
 export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
 }
 
 type AuthSession = Awaited<ReturnType<typeof getSession>>;
 
+/** Calls back with the new session whenever the user signs in or out. Returns a handle to stop listening. */
 export function subscribeAuthChange(
   callback: (session: AuthSession) => void,
 ): { unsubscribe: () => void } {
@@ -53,6 +64,7 @@ export function subscribeAuthChange(
 
 // ── Seed detection ────────────────────────────────────────────────────────────
 
+/** Whether the user already has any trips. First sign-in uses this to decide whether to load the fixture data. */
 export async function hasSeededData(userId: string): Promise<boolean> {
   const { count } = await supabase
     .from('trips')
@@ -63,6 +75,7 @@ export async function hasSeededData(userId: string): Promise<boolean> {
 
 // ── Fetch ─────────────────────────────────────────────────────────────────────
 
+/** Loads the user's trips, oldest first. A failed load returns an empty list, not an error. */
 export async function fetchTrips(userId: string): Promise<Trip[]> {
   const { data, error } = await supabase
     .from('trips')
@@ -73,6 +86,7 @@ export async function fetchTrips(userId: string): Promise<Trip[]> {
   return data.map(rowToTrip);
 }
 
+/** Loads the detail row of each of the user's trips, keyed by trip id. A failed load returns an empty object. */
 export async function fetchTripDetails(userId: string): Promise<Record<string, TripDetail>> {
   const { data, error } = await supabase
     .from('trip_details')
@@ -84,6 +98,7 @@ export async function fetchTripDetails(userId: string): Promise<Record<string, T
   );
 }
 
+/** Loads the user's insights, leaving out any they dismissed. A failed load returns an empty list. */
 export async function fetchInsights(userId: string): Promise<Insight[]> {
   const { data, error } = await supabase
     .from('insights')
@@ -94,6 +109,7 @@ export async function fetchInsights(userId: string): Promise<Insight[]> {
   return data as Insight[];
 }
 
+/** Loads the user's forwarded emails. A failed load returns an empty list. */
 export async function fetchInboxItems(userId: string): Promise<InboxItem[]> {
   const { data, error } = await supabase
     .from('inbox_items')
@@ -117,6 +133,7 @@ export async function fetchInboxToken(userId: string): Promise<string | null> {
   return (data as { token: string }).token;
 }
 
+/** Loads the user's travelers. A failed load returns an empty list. */
 export async function fetchTravelers(userId: string): Promise<Traveler[]> {
   const { data, error } = await supabase
     .from('travelers')
@@ -128,6 +145,7 @@ export async function fetchTravelers(userId: string): Promise<Traveler[]> {
 
 // ── Mutations ─────────────────────────────────────────────────────────────────
 
+/** Saves a trip, creating its row or updating it. A failed write is logged, not thrown. */
 export async function upsertTrip(userId: string, trip: Trip): Promise<void> {
   const { error } = await supabase.from('trips').upsert(
     {
@@ -146,6 +164,10 @@ export async function upsertTrip(userId: string, trip: Trip): Promise<void> {
   if (error) console.warn('[db] upsertTrip:', error.message);
 }
 
+/**
+ * Saves a trip's detail (itinerary, bookings, budget lines, packing, documents
+ * and splits) as one row. A failed write is logged, not thrown.
+ */
 export async function upsertTripDetail(
   userId: string,
   tripId: string,
@@ -178,6 +200,7 @@ export async function deleteInsight(userId: string, id: string): Promise<void> {
   if (error) console.warn('[db] deleteInsight:', error.message);
 }
 
+/** Removes a forwarded email from the inbox. A failed delete is logged, not thrown. */
 export async function deleteInboxItem(userId: string, id: string): Promise<void> {
   const { error } = await supabase
     .from('inbox_items')
@@ -187,6 +210,7 @@ export async function deleteInboxItem(userId: string, id: string): Promise<void>
   if (error) console.warn('[db] deleteInboxItem:', error.message);
 }
 
+/** Adds a forwarded email to the inbox. A failed insert is logged, not thrown. */
 export async function insertInboxItem(userId: string, item: InboxItem): Promise<void> {
   const { error } = await supabase.from('inbox_items').insert({
     id: item.id,
@@ -209,6 +233,11 @@ type InboxChange =
   | { eventType: 'INSERT' | 'UPDATE'; item: InboxItem }
   | { eventType: 'DELETE'; id: string };
 
+/**
+ * Calls back whenever the user's inbox changes in the database, such as the
+ * ingest function filing a new email, so the inbox updates without a reload.
+ * Returns a handle to stop listening.
+ */
 export function subscribeInbox(
   userId: string,
   onChange: (change: InboxChange) => void,
@@ -232,6 +261,10 @@ export function subscribeInbox(
 
 // ── Seed ──────────────────────────────────────────────────────────────────────
 
+/**
+ * Loads the fixture trips, details, insights, inbox items and travelers into
+ * the user's account, unless it already has trips.
+ */
 export async function seedFromFixtures(
   userId: string,
   data: {

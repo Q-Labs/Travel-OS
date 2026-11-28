@@ -77,7 +77,7 @@ describe('where flags are read', () => {
     expect(flagLines.length).toBeGreaterThan(0);
     for (const index of flagLines) {
       const above = lines[index - 1]?.trim() ?? '';
-      expect(above, `no owning issue above: ${lines[index]?.trim()}`).toMatch(/^\/\/.*#\d+/);
+      expect(above, `no owning issue above: ${lines[index]?.trim()}`).toMatch(/^(\/\/|\/\*\*).*#\d+/);
     }
   });
 });

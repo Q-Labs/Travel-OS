@@ -7,6 +7,7 @@ import type { InboxItem, Trip, TripDetail, TripSplit } from './types';
  * reuse them without pulling in the browser Supabase client.
  */
 
+/** Maps a `trips` row to a `Trip`, joining the two cover columns back into `cover`. */
 export function rowToTrip(row: Record<string, unknown>): Trip {
   return {
     id: row['id'] as string,
@@ -31,6 +32,7 @@ export function rowToTrip(row: Record<string, unknown>): Trip {
   };
 }
 
+/** Maps a `trip_details` row to a `TripDetail`. A null `splits` column becomes no splits. */
 export function rowToTripDetail(row: Record<string, unknown>): TripDetail {
   return {
     itinerary: row['itinerary'] as TripDetail['itinerary'],
@@ -42,6 +44,7 @@ export function rowToTripDetail(row: Record<string, unknown>): TripDetail {
   };
 }
 
+/** Maps an `inbox_items` row to an `InboxItem`. The `from_address` column becomes `from`. */
 export function rowToInboxItem(row: Record<string, unknown>): InboxItem {
   return {
     id: row['id'] as string,

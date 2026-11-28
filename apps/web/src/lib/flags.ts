@@ -15,8 +15,8 @@
  * or is cut.
  */
 
-// #142: the Tweaks panel (theme, density, accents) is a prototype control until settings exist.
+/** #142: the Tweaks panel (theme, density, accents) is a prototype control until settings exist. */
 export const FLAG_TWEAKS = import.meta.env.VITE_FLAG_TWEAKS === 'true';
 
-// #143: "Continue with Google" stays hidden until the provider is set up and tested.
+/** #143: "Continue with Google" stays hidden until the provider is set up and tested. */
 export const FLAG_SIGNIN_GOOGLE = import.meta.env.VITE_FLAG_SIGNIN_GOOGLE === 'true';
