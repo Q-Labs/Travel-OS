@@ -21,10 +21,11 @@ jobs:
       - run: npm ci
         env:
           # COBALT_PACKAGES_TOKEN: a token with read:packages (handbook secret
-          # name). Falls back to GITHUB_TOKEN, which works once the package
-          # grants this repository access; drop the fallback once the secret
-          # is set (#59).
-          NODE_AUTH_TOKEN: ${{ secrets.COBALT_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+          # name). Until the owner creates it, fall back to the old NPM_TOKEN
+          # (a PAT that can read the package), then GITHUB_TOKEN, which works
+          # only once the package grants this repository access. Drop both
+          # fallbacks once the secret is set (#59).
+          NODE_AUTH_TOKEN: ${{ secrets.COBALT_PACKAGES_TOKEN || secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:coverage
@@ -49,10 +50,11 @@ jobs:
       - run: npm ci
         env:
           # COBALT_PACKAGES_TOKEN: a token with read:packages (handbook secret
-          # name). Falls back to GITHUB_TOKEN, which works once the package
-          # grants this repository access; drop the fallback once the secret
-          # is set (#59).
-          NODE_AUTH_TOKEN: ${{ secrets.COBALT_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+          # name). Until the owner creates it, fall back to the old NPM_TOKEN
+          # (a PAT that can read the package), then GITHUB_TOKEN, which works
+          # only once the package grants this repository access. Drop both
+          # fallbacks once the secret is set (#59).
+          NODE_AUTH_TOKEN: ${{ secrets.COBALT_PACKAGES_TOKEN || secrets.NPM_TOKEN || secrets.GITHUB_TOKEN }}
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
       - name: Run Playwright tests
