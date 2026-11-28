@@ -236,7 +236,7 @@ Components import the flag from `lib/flags.ts` and never read the variable; `fla
 |---|---|
 | `npm run dev` | Vite dev server with hot reload |
 | `npm run build` | TypeScript check + Vite build → `dist/` |
-| `npm run lint` | ESLint over `apps/web/src` |
+| `npm run lint` | ESLint over `apps/web/src`: no warnings allowed, and a JSDoc comment on every export |
 | `npm run typecheck` | `tsc --noEmit` over the app, tests and `api/` |
 | `npm test` | Vitest, one run, no coverage (the fast loop) |
 | `npm run test:coverage` | Vitest with v8 coverage (100% required; the gate that the pre-push hook and CI run) |
@@ -371,5 +371,7 @@ user is resolved from the recipient's plus-tag token. It then accepts a forwarde
 ## Development workflow
 
 See [CLAUDE.md](CLAUDE.md) for the full TDD red → green → refactor cycle, 100% coverage requirement, issue/PR conventions, and commit message format.
+
+Every export under `apps/web/src` has a JSDoc comment that says what it does and why (no types in it; TypeScript has those), and `npm run lint` fails when one is missing. Tests and stories are exempt.
 
 Open an issue with the Feature, Bug or Task form, and write the pull request against `.github/pull_request_template.md`. Before opening it, run the change in the app as described in [`.claude/skills/verify/SKILL.md`](.claude/skills/verify/SKILL.md) and say what you saw.
