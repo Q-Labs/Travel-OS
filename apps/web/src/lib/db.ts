@@ -262,8 +262,26 @@ export function subscribeInbox(
 // ── Seed ──────────────────────────────────────────────────────────────────────
 
 /**
+ * Waits for one seed write and logs its error, naming the table, as the other
+ * writers in this file do. Says whether it worked.
+ */
+async function seedWrite(
+  table: string,
+  write: PromiseLike<{ error: { message: string } | null }>,
+): Promise<boolean> {
+  const { error } = await write;
+  if (error) console.warn(`[db] seedFromFixtures ${table}:`, error.message);
+  return !error;
+}
+
+/**
  * Loads the fixture trips, details, insights, inbox items and travelers into
- * the user's account, unless it already has trips.
+ * the user's account, unless it already has trips. The trips go in first, with
+ * the travelers, because a trip's details have a foreign key to it and would
+ * be rejected if they arrived before it. If the trips cannot be written, nothing
+ * else is, so the account stays empty and the next sign-in tries again. Every
+ * failed write is logged. A failure after the trips are in still leaves the
+ * account part seeded, since `hasSeededData` goes by the trips.
  */
 export async function seedFromFixtures(
   userId: string,
@@ -277,12 +295,12 @@ export async function seedFromFixtures(
 ): Promise<void> {
   if (await hasSeededData(userId)) return;
 
-  await Promise.all([
-    supabase.from('travelers').upsert(
+  const [, tripsWritten] = await Promise.all([
+    seedWrite('travelers', supabase.from('travelers').upsert(
       data.travelers.map((t) => ({ ...t, user_id: userId })),
       { onConflict: 'id,user_id' },
-    ),
-    supabase.from('trips').upsert(
+    )),
+    seedWrite('trips', supabase.from('trips').upsert(
       data.trips.map((t) => ({
         id: t.id, user_id: userId,
         destination: t.destination, region: t.region, country: t.country,
@@ -294,8 +312,12 @@ export async function seedFromFixtures(
         notes: t.notes, nights: t.nights,
       })),
       { onConflict: 'id,user_id' },
-    ),
-    supabase.from('trip_details').upsert(
+    )),
+  ]);
+  if (!tripsWritten) return;
+
+  await Promise.all([
+    seedWrite('trip_details', supabase.from('trip_details').upsert(
       Object.entries(data.tripDetails).map(([tripId, detail]) => ({
         trip_id: tripId, user_id: userId,
         itinerary: detail.itinerary, bookings: detail.bookings,
@@ -303,12 +325,12 @@ export async function seedFromFixtures(
         documents: detail.documents, splits: detail.splits,
       })),
       { onConflict: 'trip_id,user_id' },
-    ),
-    supabase.from('insights').upsert(
+    )),
+    seedWrite('insights', supabase.from('insights').upsert(
       data.insights.map((i) => ({ ...i, user_id: userId })),
       { onConflict: 'id,user_id' },
-    ),
-    supabase.from('inbox_items').upsert(
+    )),
+    seedWrite('inbox_items', supabase.from('inbox_items').upsert(
       data.inbox.map((item) => ({
         id: item.id, user_id: userId,
         source: item.source, vendor: item.vendor, subject: item.subject,
@@ -317,7 +339,6 @@ export async function seedFromFixtures(
         suggested_confidence: item.suggested_confidence, note: item.note,
       })),
       { onConflict: 'id,user_id' },
-    ),
+    )),
   ]);
 }
-

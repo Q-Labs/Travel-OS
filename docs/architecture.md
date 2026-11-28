@@ -145,7 +145,7 @@ erDiagram
 | Realtime | `inbox_items` is in the Realtime publication, so a parsed email appears without a reload |
 | JSON documents | `trip_details` holds six. A booking, a packing item and a document have **no id**: the app addresses them by position in the array |
 | `trips.travelers` | An array of traveler ids with no foreign key |
-| First sign-in | The app seeds the fixture trips into a new account (`seedFromFixtures`) |
+| First sign-in | The app seeds the fixture trips into a new account (`seedFromFixtures`): travelers and trips first, then details, insights and inbox, with every failed write logged. If the trips fail, nothing else is written and the next sign-in tries again; a failure after the trips are in leaves the account part seeded, because the check goes by the trips (#153). #136 may remove seeding altogether |
 | Types | `lib/types.ts` is hand-written. Rows are cast to those types, not validated |
 
 ## Server functions
