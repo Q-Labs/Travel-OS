@@ -207,6 +207,17 @@ On first login the app seeds fixture trips, bookings, and inbox items so you hav
 
 Both values are available in your Supabase project under **Settings → API**.
 
+### Feature flags (Vite, build-time)
+
+Code outside the MVP sits behind a flag or is removed. Each flag is a `VITE_FLAG_<NAME>` variable that is **off unless it is exactly `true`** (`TRUE`, `1` and `yes` do not count). Vite fixes the value when it builds, so turning a flag on means a rebuild and a redeploy; with a flag off, the code behind it is not in the production bundle.
+
+| Variable | Flag in `lib/flags.ts` | Owner | Gates |
+|---|---|---|---|
+| `VITE_FLAG_TWEAKS` | `FLAG_TWEAKS` | #142 | The Tweaks panel (theme, density, accents) |
+| `VITE_FLAG_SIGNIN_GOOGLE` | `FLAG_SIGNIN_GOOGLE` | #143 | "Continue with Google" on the sign-in page |
+
+Components import the flag from `lib/flags.ts` and never read the variable; `flags.test.ts` fails if anything else mentions `VITE_FLAG_`. A flag names its owning issue in a comment and is deleted when its feature ships or is cut. The module explains why each flag is its own constant with the comparison written inline.
+
 ### Server-side (email ingestion API)
 
 | Variable | Description |
@@ -300,6 +311,7 @@ apps/web/
                    rows.ts (row → domain mappers), insights.ts (pure insight rules),
                    inboundEmail.ts (provider webhook adapters), ical.ts (RFC 5545 writer),
                    currency.ts (conversion + formatting),
+                   flags.ts (feature flags, off by default),
                    clients/ — openMeteo.ts (weather + geocoding), frankfurter.ts (FX),
                               wikipedia.ts (destination summaries)
 api/             — Vercel serverless functions (must sit at the repo root)
