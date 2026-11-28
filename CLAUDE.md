@@ -87,9 +87,10 @@ Coverage is measured only over `app/`, `components/`, `lib/`, and `api/`, but `v
 
 Every piece of work must be tracked:
 
-1. **Open an issue first** — if no issue exists for the task, create one before writing any code. The issue is the canonical description of the work.
+1. **Open an issue first** — if no issue exists for the task, create one before writing any code. The issue is the canonical description of the work. Use the Feature, Bug or Task form in `.github/ISSUE_TEMPLATE/`.
 2. **Reference the issue in every commit** — use `type(#N): description` format (e.g. `feat(#7): add AddTripModal wizard`).
-3. **Close the issue on merge** — add `Closes #N` to the PR description body so GitHub automatically closes the issue when the PR merges. Never leave an implemented issue open.
+3. **Close the issue on merge** — add `Closes #N` to the PR description body so GitHub automatically closes the issue when the PR merges. Never leave an implemented issue open. The PR description follows `.github/pull_request_template.md`.
+4. **Verify at runtime** — before opening the PR, run the change as `.claude/skills/verify/SKILL.md` describes and say what you saw under Verification.
 
 ## Responding to PR review comments
 
