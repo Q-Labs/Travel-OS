@@ -8,6 +8,11 @@ import { LoginPage } from '../components/pages/LoginPage';
 import { PipelinePage } from '../components/pages/PipelinePage';
 import { TripDetailPage } from '../components/pages/TripDetailPage';
 
+/**
+ * The app's routes: the login page, and the signed-in pages under `/app`
+ * (pipeline, inbox, calendar, archive and a trip's detail), which
+ * `authGuardLoader` protects. `/` and `/app` both redirect to the pipeline.
+ */
 export const router = createBrowserRouter([
   {
     path: '/',
